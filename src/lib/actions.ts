@@ -436,6 +436,182 @@ export async function recordLoginStreak() {
   }
 }
 
+// ── Projects ──
+export async function createProject(data: {
+  title: string;
+  description?: string;
+  color?: string;
+}) {
+  try {
+    const userId = await getUser();
+    if (!data.title?.trim()) return;
+
+    const project = await prisma.project.create({
+      data: {
+        userId,
+        title: data.title.trim(),
+        description: data.description?.trim() || null,
+        color: data.color || "#0066cc",
+      },
+    });
+
+    await addXP(userId, XP_REWARDS.LOG_ACTIVITY, `Created project: ${data.title}`, "project");
+
+    revalidatePath("/");
+    revalidatePath("/projects");
+    return project.id;
+  } catch (error) {
+    console.error("Error creating project:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function updateProject(projectId: string, data: {
+  title?: string;
+  description?: string;
+  status?: string;
+  color?: string;
+}) {
+  try {
+    const userId = await getUser();
+    const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
+    if (!project) return;
+
+    await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        ...(data.title !== undefined && { title: data.title.trim() }),
+        ...(data.description !== undefined && { description: data.description.trim() || null }),
+        ...(data.status !== undefined && { status: data.status }),
+        ...(data.color !== undefined && { color: data.color }),
+      },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error updating project:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function deleteProject(projectId: string) {
+  try {
+    const userId = await getUser();
+    const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
+    if (!project) return;
+
+    await prisma.project.delete({ where: { id: projectId } });
+    revalidatePath("/");
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function createMilestone(projectId: string, title: string) {
+  try {
+    const userId = await getUser();
+    const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
+    if (!project || !title?.trim()) return;
+
+    // Get the next order value
+    const lastMilestone = await prisma.milestone.findFirst({
+      where: { projectId },
+      orderBy: { order: "desc" },
+    });
+
+    await prisma.milestone.create({
+      data: {
+        projectId,
+        title: title.trim(),
+        order: (lastMilestone?.order ?? -1) + 1,
+      },
+    });
+
+    // Recalculate project progress
+    await recalcProjectProgress(projectId);
+
+    revalidatePath("/");
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error creating milestone:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function toggleMilestone(milestoneId: string) {
+  try {
+    const userId = await getUser();
+    const milestone = await prisma.milestone.findFirst({
+      where: { id: milestoneId },
+      include: { project: true },
+    });
+    if (!milestone || milestone.project.userId !== userId) return;
+
+    const isCompleting = !milestone.completedAt;
+
+    await prisma.milestone.update({
+      where: { id: milestoneId },
+      data: { completedAt: isCompleting ? new Date() : null },
+    });
+
+    // Award XP for completing a milestone
+    if (isCompleting) {
+      await addXP(userId, XP_REWARDS.COMPLETE_MILESTONE,
+        `Milestone: ${milestone.title} (${milestone.project.title})`, "project");
+    }
+
+    // Recalculate project progress
+    await recalcProjectProgress(milestone.projectId);
+
+    revalidatePath("/");
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error toggling milestone:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function deleteMilestone(milestoneId: string) {
+  try {
+    const userId = await getUser();
+    const milestone = await prisma.milestone.findFirst({
+      where: { id: milestoneId },
+      include: { project: true },
+    });
+    if (!milestone || milestone.project.userId !== userId) return;
+
+    await prisma.milestone.delete({ where: { id: milestoneId } });
+
+    // Recalculate project progress
+    await recalcProjectProgress(milestone.projectId);
+
+    revalidatePath("/");
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error deleting milestone:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+async function recalcProjectProgress(projectId: string) {
+  const milestones = await prisma.milestone.findMany({ where: { projectId } });
+  const total = milestones.length;
+  const completed = milestones.filter((m) => m.completedAt).length;
+  const pct = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      progressPct: pct,
+      // Auto-complete project when all milestones done
+      status: pct === 100 && total > 0 ? "completed" : undefined,
+    },
+  });
+}
+
 // ── Vault ──
 export async function createVaultItem(data: {
   category: string;

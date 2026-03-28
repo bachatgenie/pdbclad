@@ -1,6 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { ProjectForm } from "@/components/project-form";
+import { ProjectCard } from "@/components/project-card";
+import { FolderKanban } from "lucide-react";
 
 export default async function ProjectsPage() {
   const session = await auth();
@@ -12,56 +15,63 @@ export default async function ProjectsPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  const activeProjects = projects.filter((p) => p.status === "active");
+  const onHoldProjects = projects.filter((p) => p.status === "on_hold");
+  const completedProjects = projects.filter((p) => p.status === "completed" || p.status === "archived");
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">Projects</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Projects</h1>
+        <ProjectForm />
+      </div>
 
       {projects.length === 0 ? (
-        <div className="glass rounded-xl p-8 text-center">
-          <p className="text-text-muted">No projects yet. Coming soon with full CRUD!</p>
+        <div className="glass rounded-xl p-12 text-center space-y-3">
+          <FolderKanban className="w-12 h-12 mx-auto text-text-muted" />
+          <p className="text-text-secondary font-medium">No projects yet</p>
+          <p className="text-sm text-text-muted">
+            Create your first project to start tracking milestones and earning XP.
+          </p>
         </div>
       ) : (
-        projects.map((project) => {
-          const completedMilestones = project.milestones.filter((m) => m.completedAt).length;
-          return (
-            <div key={project.id} className="glass rounded-xl p-5 space-y-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: project.color }}
-                />
-                <h2 className="text-lg font-semibold">{project.title}</h2>
-                <span className="text-xs text-text-muted ml-auto">{project.status}</span>
-              </div>
+        <div className="space-y-8">
+          {/* Active projects */}
+          {activeProjects.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
+                Active ({activeProjects.length})
+              </h2>
+              {activeProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </section>
+          )}
 
-              {/* Progress bar */}
-              <div className="w-full h-2 rounded-full bg-bg-card">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${project.progressPct}%`,
-                    backgroundColor: project.color,
-                  }}
-                />
-              </div>
-              <span className="text-xs text-text-muted">{project.progressPct}%</span>
+          {/* On hold */}
+          {onHoldProjects.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-accent-yellow uppercase tracking-wide">
+                On Hold ({onHoldProjects.length})
+              </h2>
+              {onHoldProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </section>
+          )}
 
-              {/* Milestones */}
-              {project.milestones.length > 0 && (
-                <div className="space-y-1 mt-2">
-                  {project.milestones.map((m) => (
-                    <div key={m.id} className="flex items-center gap-2 text-sm">
-                      <span>{m.completedAt ? "✅" : "○"}</span>
-                      <span className={m.completedAt ? "text-text-muted line-through" : ""}>
-                        {m.title}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })
+          {/* Completed & Archived */}
+          {completedProjects.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide">
+                Completed ({completedProjects.length})
+              </h2>
+              {completedProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </section>
+          )}
+        </div>
       )}
     </div>
   );
