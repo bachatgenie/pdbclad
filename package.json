@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "next dev --port 3001",
+    "dev": "next dev --port 3002",
     "build": "npx prisma generate && next build",
     "start": "next start",
     "seed": "npx tsx prisma/seed.ts",
