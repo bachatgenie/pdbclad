@@ -3,7 +3,34 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "./prisma";
 
+// Validate required environment variables
+const validateAuthConfig = () => {
+  const secret = process.env.AUTH_SECRET;
+  const url = process.env.NEXTAUTH_URL;
+
+  if (!secret) {
+    throw new Error(
+      "AUTH_SECRET environment variable is not set. Generate one with: openssl rand -base64 32"
+    );
+  }
+
+  if (!url) {
+    throw new Error(
+      "NEXTAUTH_URL environment variable is not set. Set it to your deployment URL."
+    );
+  }
+
+  if (process.env.NODE_ENV === "production" && secret === "pdbclad-dev-secret-change-in-production-abc123xyz") {
+    throw new Error(
+      "AUTH_SECRET must be changed from the default development value in production!"
+    );
+  }
+};
+
+validateAuthConfig();
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET,
   providers: [
     Credentials({
       name: "Password",

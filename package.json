@@ -8,7 +8,14 @@
     "start": "next start",
     "seed": "npx tsx prisma/seed.ts",
     "db:push": "npx prisma db push",
-    "db:studio": "npx prisma studio"
+    "db:migrate": "npx prisma migrate dev",
+    "db:setup": "npx prisma migrate dev && npm run seed",
+    "db:setup:prod": "npx prisma migrate deploy && npm run seed",
+    "db:studio": "npx prisma studio",
+    "db:validate": "npx prisma validate"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",

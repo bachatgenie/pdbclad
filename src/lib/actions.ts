@@ -5,220 +5,274 @@ import { auth } from "./auth";
 import { getLevelForXP, XP_REWARDS } from "./gamification";
 import { revalidatePath } from "next/cache";
 
+// Helper to handle database errors gracefully
+function handleDbError(error: unknown): string {
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes("database") || msg.includes("prisma")) {
+      return "Database error. Please try again.";
+    }
+    return error.message;
+  }
+  return "An error occurred. Please try again.";
+}
+
 async function getUser() {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
+  if (!session?.user?.id) {
+    throw new Error("Not authenticated");
+  }
   return session.user.id;
 }
 
 async function addXP(userId: string, amount: number, content: string, category: string) {
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: { xp: { increment: amount } },
-  });
-
-  const newLevel = getLevelForXP(user.xp);
-  if (newLevel !== user.level) {
-    await prisma.user.update({
+  try {
+    const user = await prisma.user.update({
       where: { id: userId },
-      data: { level: newLevel },
+      data: { xp: { increment: amount } },
     });
+
+    const newLevel = getLevelForXP(user.xp);
+    if (newLevel !== user.level) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { level: newLevel },
+      });
+    }
+
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        content,
+        category,
+        source: "manual",
+        xpEarned: amount,
+      },
+    });
+
+    return user.xp;
+  } catch (error) {
+    console.error("Error adding XP:", error);
+    throw new Error(handleDbError(error));
   }
-
-  await prisma.activityLog.create({
-    data: {
-      userId,
-      content,
-      category,
-      source: "manual",
-      xpEarned: amount,
-    },
-  });
-
-  return user.xp;
 }
 
 // ── Quick Log ──
 export async function quickLog(formData: FormData) {
-  const userId = await getUser();
-  const content = formData.get("content") as string;
-  if (!content?.trim()) return;
+  try {
+    const userId = await getUser();
+    const content = formData.get("content") as string;
+    if (!content?.trim()) return;
 
-  const tags: string[] = [];
-  const cleanContent = content.replace(/#(\w+)/g, (_, tag) => {
-    tags.push(tag);
-    return "";
-  }).trim();
+    const tags: string[] = [];
+    const cleanContent = content.replace(/#(\w+)/g, (_, tag) => {
+      tags.push(tag);
+      return "";
+    }).trim();
 
-  await addXP(userId, XP_REWARDS.LOG_ACTIVITY, cleanContent || content, "general");
+    await addXP(userId, XP_REWARDS.LOG_ACTIVITY, cleanContent || content, "general");
 
-  if (tags.length > 0) {
-    // Update the last activity log with tags
-    const lastLog = await prisma.activityLog.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-    if (lastLog) {
-      await prisma.activityLog.update({
-        where: { id: lastLog.id },
-        data: { tags: JSON.stringify(tags) },
+    if (tags.length > 0) {
+      // Update the last activity log with tags
+      const lastLog = await prisma.activityLog.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
       });
+      if (lastLog) {
+        await prisma.activityLog.update({
+          where: { id: lastLog.id },
+          data: { tags: JSON.stringify(tags) },
+        });
+      }
     }
-  }
 
-  revalidatePath("/");
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Error in quickLog:", error);
+    throw new Error(handleDbError(error));
+  }
 }
 
 // ── Todos ──
 export async function createTodo(formData: FormData) {
-  const userId = await getUser();
-  const title = formData.get("title") as string;
-  const priority = (formData.get("priority") as string) || "medium";
-  const isLifetime = formData.get("isLifetime") === "true";
-  const dueDate = formData.get("dueDate") as string;
+  try {
+    const userId = await getUser();
+    const title = formData.get("title") as string;
+    const priority = (formData.get("priority") as string) || "medium";
+    const isLifetime = formData.get("isLifetime") === "true";
+    const dueDate = formData.get("dueDate") as string;
 
-  if (!title?.trim()) return;
+    if (!title?.trim()) return;
 
-  await prisma.todo.create({
-    data: {
-      userId,
-      title: title.trim(),
-      priority,
-      isLifetime,
-      dueDate: dueDate ? new Date(dueDate) : null,
-    },
-  });
+    await prisma.todo.create({
+      data: {
+        userId,
+        title: title.trim(),
+        priority,
+        isLifetime,
+        dueDate: dueDate ? new Date(dueDate) : null,
+      },
+    });
 
-  revalidatePath("/");
-  revalidatePath("/todos");
+    revalidatePath("/");
+    revalidatePath("/todos");
+  } catch (error) {
+    console.error("Error creating todo:", error);
+    throw new Error(handleDbError(error));
+  }
 }
 
 export async function toggleTodo(todoId: string) {
-  const userId = await getUser();
-  const todo = await prisma.todo.findFirst({
-    where: { id: todoId, userId },
-  });
-  if (!todo) return;
+  try {
+    const userId = await getUser();
+    const todo = await prisma.todo.findFirst({
+      where: { id: todoId, userId },
+    });
+    if (!todo) return;
 
-  const isCompleting = !todo.completedAt;
+    const isCompleting = !todo.completedAt;
 
-  await prisma.todo.update({
-    where: { id: todoId },
-    data: { completedAt: isCompleting ? new Date() : null },
-  });
+    await prisma.todo.update({
+      where: { id: todoId },
+      data: { completedAt: isCompleting ? new Date() : null },
+    });
 
-  if (isCompleting) {
-    await addXP(userId, XP_REWARDS.COMPLETE_TODO, `Completed: ${todo.title}`, "todo");
+    if (isCompleting) {
+      await addXP(userId, XP_REWARDS.COMPLETE_TODO, `Completed: ${todo.title}`, "todo");
+    }
+
+    revalidatePath("/");
+    revalidatePath("/todos");
+  } catch (error) {
+    console.error("Error toggling todo:", error);
+    throw new Error(handleDbError(error));
   }
-
-  revalidatePath("/");
-  revalidatePath("/todos");
 }
 
 export async function deleteTodo(todoId: string) {
-  const userId = await getUser();
-  const todo = await prisma.todo.findFirst({ where: { id: todoId, userId } });
-  if (!todo) return;
-  await prisma.todo.delete({ where: { id: todoId } });
-  revalidatePath("/");
-  revalidatePath("/todos");
+  try {
+    const userId = await getUser();
+    const todo = await prisma.todo.findFirst({ where: { id: todoId, userId } });
+    if (!todo) return;
+    await prisma.todo.delete({ where: { id: todoId } });
+    revalidatePath("/");
+    revalidatePath("/todos");
+  } catch (error) {
+    console.error("Error deleting todo:", error);
+    throw new Error(handleDbError(error));
+  }
 }
 
 export async function updateTodo(todoId: string, data: { title?: string; priority?: string; dueDate?: string | null }) {
-  const userId = await getUser();
-  const todo = await prisma.todo.findFirst({ where: { id: todoId, userId } });
-  if (!todo) return;
+  try {
+    const userId = await getUser();
+    const todo = await prisma.todo.findFirst({ where: { id: todoId, userId } });
+    if (!todo) return;
 
-  await prisma.todo.update({
-    where: { id: todoId },
-    data: {
-      ...(data.title !== undefined && { title: data.title }),
-      ...(data.priority !== undefined && { priority: data.priority }),
-      ...(data.dueDate !== undefined && { dueDate: data.dueDate ? new Date(data.dueDate) : null }),
-    },
-  });
+    await prisma.todo.update({
+      where: { id: todoId },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.priority !== undefined && { priority: data.priority }),
+        ...(data.dueDate !== undefined && { dueDate: data.dueDate ? new Date(data.dueDate) : null }),
+      },
+    });
 
-  revalidatePath("/");
-  revalidatePath("/todos");
+    revalidatePath("/");
+    revalidatePath("/todos");
+  } catch (error) {
+    console.error("Error updating todo:", error);
+    throw new Error(handleDbError(error));
+  }
 }
 
 // ── Habits ──
 
 // Toggle a simple boolean habit (no unit) or log first entry for a quantity habit
 export async function toggleHabitLog(habitId: string) {
-  const userId = await getUser();
-  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
-  if (!habit) return;
+  try {
+    const userId = await getUser();
+    const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
+    if (!habit) return;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const existing = await prisma.habitLog.findUnique({
-    where: { habitId_date: { habitId, date: today } },
-  });
-
-  if (existing) {
-    // For boolean habits: untoggle. For quantity habits: don't delete (use logHabitValue instead)
-    if (!habit.unit) {
-      await prisma.habitLog.delete({ where: { id: existing.id } });
-    }
-  } else {
-    await prisma.habitLog.create({
-      data: { habitId, date: today, completed: true, value: habit.unit ? 1 : null },
+    const existing = await prisma.habitLog.findUnique({
+      where: { habitId_date: { habitId, date: today } },
     });
-    await awardHabitXP(userId, habit);
-    await updateHabitStreak(userId, habitId, today);
-  }
 
-  revalidatePath("/");
-  revalidatePath("/habits");
+    if (existing) {
+      // For boolean habits: untoggle. For quantity habits: don't delete (use logHabitValue instead)
+      if (!habit.unit) {
+        await prisma.habitLog.delete({ where: { id: existing.id } });
+      }
+    } else {
+      await prisma.habitLog.create({
+        data: { habitId, date: today, completed: true, value: habit.unit ? 1 : null },
+      });
+      await awardHabitXP(userId, habit);
+      await updateHabitStreak(userId, habitId, today);
+    }
+
+    revalidatePath("/");
+    revalidatePath("/habits");
+  } catch (error) {
+    console.error("Error toggling habit log:", error);
+    throw new Error(handleDbError(error));
+  }
 }
 
 // Log a specific value for quantity habits (e.g., +1 cup of tea, +5 minutes meditation)
 export async function logHabitValue(habitId: string, amount: number, note?: string) {
-  const userId = await getUser();
-  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
-  if (!habit) return;
+  try {
+    const userId = await getUser();
+    const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
+    if (!habit) return;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const existing = await prisma.habitLog.findUnique({
-    where: { habitId_date: { habitId, date: today } },
-  });
-
-  if (existing) {
-    // Increment the value
-    const newValue = (existing.value || 0) + amount;
-    const isComplete = habit.targetValue ? newValue >= habit.targetValue : true;
-    await prisma.habitLog.update({
-      where: { id: existing.id },
-      data: {
-        value: newValue,
-        completed: isComplete,
-        notes: note ? `${existing.notes ? existing.notes + "; " : ""}${note}` : existing.notes,
-      },
+    const existing = await prisma.habitLog.findUnique({
+      where: { habitId_date: { habitId, date: today } },
     });
 
-    // Award XP for each increment logged
-    if (habit.type === "good") {
-      await addXP(userId, 2, `${habit.title}: +${amount} ${habit.unit}`, "habit");
+    if (existing) {
+      // Increment the value
+      const newValue = (existing.value || 0) + amount;
+      const isComplete = habit.targetValue ? newValue >= habit.targetValue : true;
+      await prisma.habitLog.update({
+        where: { id: existing.id },
+        data: {
+          value: newValue,
+          completed: isComplete,
+          notes: note ? `${existing.notes ? existing.notes + "; " : ""}${note}` : existing.notes,
+        },
+      });
+
+      // Award XP for each increment logged
+      if (habit.type === "good") {
+        await addXP(userId, 2, `${habit.title}: +${amount} ${habit.unit}`, "habit");
+      } else {
+        await addXP(userId, XP_REWARDS.LOG_BAD_HABIT + XP_REWARDS.LOG_BAD_HABIT_HONESTY,
+          `${habit.title}: +${amount} ${habit.unit} (honesty bonus)`, "habit");
+      }
     } else {
-      await addXP(userId, XP_REWARDS.LOG_BAD_HABIT + XP_REWARDS.LOG_BAD_HABIT_HONESTY,
-        `${habit.title}: +${amount} ${habit.unit} (honesty bonus)`, "habit");
+      // First log of the day
+      const isComplete = habit.targetValue ? amount >= habit.targetValue : true;
+      await prisma.habitLog.create({
+        data: { habitId, date: today, completed: isComplete, value: amount, notes: note || null },
+      });
+      await awardHabitXP(userId, habit);
+      await updateHabitStreak(userId, habitId, today);
     }
-  } else {
-    // First log of the day
-    const isComplete = habit.targetValue ? amount >= habit.targetValue : true;
-    await prisma.habitLog.create({
-      data: { habitId, date: today, completed: isComplete, value: amount, notes: note || null },
-    });
-    await awardHabitXP(userId, habit);
-    await updateHabitStreak(userId, habitId, today);
-  }
 
-  revalidatePath("/");
-  revalidatePath("/habits");
+    revalidatePath("/");
+    revalidatePath("/habits");
+  } catch (error) {
+    console.error("Error logging habit value:", error);
+    throw new Error(handleDbError(error));
+  }
 }
 
 async function awardHabitXP(userId: string, habit: { type: string; title: string }) {
@@ -256,110 +310,130 @@ async function updateHabitStreak(userId: string, habitId: string, today: Date) {
 }
 
 export async function createHabit(formData: FormData) {
-  const userId = await getUser();
-  const title = formData.get("title") as string;
-  const type = (formData.get("type") as string) || "good";
-  const icon = (formData.get("icon") as string) || "⭐";
-  const unit = formData.get("unit") as string || null;
-  const targetValue = formData.get("targetValue") as string;
+  try {
+    const userId = await getUser();
+    const title = formData.get("title") as string;
+    const type = (formData.get("type") as string) || "good";
+    const icon = (formData.get("icon") as string) || "⭐";
+    const unit = formData.get("unit") as string || null;
+    const targetValue = formData.get("targetValue") as string;
 
-  if (!title?.trim()) return;
+    if (!title?.trim()) return;
 
-  await prisma.habit.create({
-    data: {
-      userId,
-      title: title.trim(),
-      type,
-      icon,
-      unit: unit || null,
-      targetValue: targetValue ? parseFloat(targetValue) : null,
-    },
-  });
+    await prisma.habit.create({
+      data: {
+        userId,
+        title: title.trim(),
+        type,
+        icon,
+        unit: unit || null,
+        targetValue: targetValue ? parseFloat(targetValue) : null,
+      },
+    });
 
-  revalidatePath("/");
-  revalidatePath("/habits");
+    revalidatePath("/");
+    revalidatePath("/habits");
+  } catch (error) {
+    console.error("Error creating habit:", error);
+    throw new Error(handleDbError(error));
+  }
 }
 
 export async function deleteHabit(habitId: string) {
-  const userId = await getUser();
-  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
-  if (!habit) return;
-  await prisma.habit.delete({ where: { id: habitId } });
-  revalidatePath("/");
-  revalidatePath("/habits");
+  try {
+    const userId = await getUser();
+    const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
+    if (!habit) return;
+    await prisma.habit.delete({ where: { id: habitId } });
+    revalidatePath("/");
+    revalidatePath("/habits");
+  } catch (error) {
+    console.error("Error deleting habit:", error);
+    throw new Error(handleDbError(error));
+  }
 }
 
 // ── Life List Progress ──
 export async function incrementLifeProgress(todoId: string, amount: number = 1) {
-  const userId = await getUser();
-  const todo = await prisma.todo.findFirst({
-    where: { id: todoId, userId, isLifetime: true },
-  });
-  if (!todo || !todo.progressMax) return;
+  try {
+    const userId = await getUser();
+    const todo = await prisma.todo.findFirst({
+      where: { id: todoId, userId, isLifetime: true },
+    });
+    if (!todo || !todo.progressMax) return;
 
-  const newProgress = Math.max(0, Math.min((todo.progress || 0) + amount, todo.progressMax));
-  const isComplete = newProgress >= todo.progressMax;
+    const newProgress = Math.max(0, Math.min((todo.progress || 0) + amount, todo.progressMax));
+    const isComplete = newProgress >= todo.progressMax;
 
-  await prisma.todo.update({
-    where: { id: todoId },
-    data: {
-      progress: newProgress,
-      completedAt: isComplete ? new Date() : null,
-    },
-  });
+    await prisma.todo.update({
+      where: { id: todoId },
+      data: {
+        progress: newProgress,
+        completedAt: isComplete ? new Date() : null,
+      },
+    });
 
-  await addXP(userId, XP_REWARDS.LOG_ACTIVITY,
-    `${todo.title}: ${newProgress}/${todo.progressMax}`, "todo");
+    await addXP(userId, XP_REWARDS.LOG_ACTIVITY,
+      `${todo.title}: ${newProgress}/${todo.progressMax}`, "todo");
 
-  if (isComplete) {
-    await addXP(userId, XP_REWARDS.COMPLETE_TODO, `Life goal completed: ${todo.title}!`, "todo");
+    if (isComplete) {
+      await addXP(userId, XP_REWARDS.COMPLETE_TODO, `Life goal completed: ${todo.title}!`, "todo");
+    }
+
+    revalidatePath("/");
+    revalidatePath("/todos");
+  } catch (error) {
+    console.error("Error incrementing life progress:", error);
+    throw new Error(handleDbError(error));
   }
-
-  revalidatePath("/");
-  revalidatePath("/todos");
 }
 
 // ── Login streak ──
 export async function recordLoginStreak() {
-  const userId = await getUser();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  try {
+    const userId = await getUser();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const streak = await prisma.streak.upsert({
-    where: { userId_type: { userId, type: "login" } },
-    create: { userId, type: "login", currentCount: 1, bestCount: 1, lastDate: today },
-    update: {},
-  });
+    const streak = await prisma.streak.upsert({
+      where: { userId_type: { userId, type: "login" } },
+      create: { userId, type: "login", currentCount: 1, bestCount: 1, lastDate: today },
+      update: {},
+    });
 
-  if (streak.lastDate) {
-    const lastDate = new Date(streak.lastDate);
-    lastDate.setHours(0, 0, 0, 0);
+    if (streak.lastDate) {
+      const lastDate = new Date(streak.lastDate);
+      lastDate.setHours(0, 0, 0, 0);
 
-    if (lastDate.getTime() === today.getTime()) return streak.currentCount;
+      if (lastDate.getTime() === today.getTime()) return streak.currentCount;
 
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
 
-    if (lastDate.getTime() === yesterday.getTime()) {
-      const newCount = streak.currentCount + 1;
-      await prisma.streak.update({
-        where: { id: streak.id },
-        data: {
-          currentCount: newCount,
-          bestCount: Math.max(newCount, streak.bestCount),
-          lastDate: today,
-        },
-      });
-      return newCount;
+      if (lastDate.getTime() === yesterday.getTime()) {
+        const newCount = streak.currentCount + 1;
+        await prisma.streak.update({
+          where: { id: streak.id },
+          data: {
+            currentCount: newCount,
+            bestCount: Math.max(newCount, streak.bestCount),
+            lastDate: today,
+          },
+        });
+        return newCount;
+      }
     }
-  }
 
-  // Streak broken or first time
-  await prisma.streak.update({
-    where: { id: streak.id },
-    data: { currentCount: 1, lastDate: today },
-  });
-  return 1;
+    // Streak broken or first time
+    await prisma.streak.update({
+      where: { id: streak.id },
+      data: { currentCount: 1, lastDate: today },
+    });
+    return 1;
+  } catch (error) {
+    console.error("Error recording login streak:", error);
+    throw new Error(handleDbError(error));
+  }
 }
 
 // ── Vault ──
