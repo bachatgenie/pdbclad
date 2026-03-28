@@ -27,7 +27,7 @@ export default async function StatsPage() {
 
       {/* Profile card */}
       <div className="glass rounded-xl p-6 text-center space-y-3">
-        <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-accent-purple to-accent-blue flex items-center justify-center text-2xl font-bold text-white">
+        <div className="w-16 h-16 mx-auto rounded-full bg-xp-bar flex items-center justify-center text-2xl font-bold text-white">
           {user.name.charAt(0)}
         </div>
         <h2 className="text-xl font-bold">{user.name}</h2>
@@ -67,7 +67,7 @@ export default async function StatsPage() {
           <p className="text-sm text-text-muted">Todos Completed</p>
         </div>
         <div className="glass rounded-xl p-5 text-center">
-          <p className="text-3xl font-bold text-accent-blue">{totalLogs}</p>
+          <p className="text-3xl font-bold text-xp-bar">{totalLogs}</p>
           <p className="text-sm text-text-muted">Activities Logged</p>
         </div>
       </div>

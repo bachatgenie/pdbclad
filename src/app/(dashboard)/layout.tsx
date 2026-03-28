@@ -36,7 +36,7 @@ export default async function DashboardLayout({
                 <XPBar xp={user.xp} level={user.level} compact />
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-purple to-accent-blue flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-xp-bar flex items-center justify-center">
                   <User className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-sm font-medium text-text-primary hidden sm:inline">

@@ -64,7 +64,7 @@ export function HabitQuickToggle({ habit, loggedToday, todayValue, showDelete }:
                   className={cn(
                     "h-full rounded-full transition-all",
                     isGood
-                      ? (targetMet ? "bg-accent-green" : "bg-accent-purple")
+                      ? (targetMet ? "bg-accent-green" : "bg-xp-bar")
                       : (targetMet ? "bg-accent-red" : "bg-accent-yellow")
                   )}
                   style={{ width: `${progressPct}%` }}
@@ -77,7 +77,7 @@ export function HabitQuickToggle({ habit, loggedToday, todayValue, showDelete }:
           <div className="flex items-center gap-1">
             <button
               onClick={() => logHabitValue(habit.id, 1)}
-              className="w-7 h-7 rounded-lg bg-bg-card hover:bg-accent-purple/20 flex items-center justify-center text-text-muted hover:text-accent-purple transition-colors"
+              className="w-7 h-7 rounded-lg bg-bg-card hover:bg-xp-bar/20 flex items-center justify-center text-text-muted hover:text-xp-bar transition-colors"
               title={`+1 ${habit.unit}`}
             >
               <Plus className="w-3.5 h-3.5" />

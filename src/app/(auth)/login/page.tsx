@@ -37,11 +37,11 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-purple to-accent-blue flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-xp-bar flex items-center justify-center">
               <Zap className="w-7 h-7 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-purple to-accent-blue bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-xp-bar bg-clip-text text-transparent">
             PDBclad
           </h1>
           <p className="text-text-secondary mt-2">Your life, organized and gamified</p>
@@ -86,7 +86,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-accent-purple to-accent-blue text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-xp-bar text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>

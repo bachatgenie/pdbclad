@@ -11,7 +11,7 @@ export function AddVaultItemButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent-purple text-white text-sm font-medium hover:opacity-90 transition-opacity"
+        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-xp-bar text-white text-sm font-medium hover:opacity-90 transition-opacity"
       >
         <Plus className="w-4 h-4" />
         Add Item

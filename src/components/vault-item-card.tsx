@@ -67,7 +67,7 @@ export function VaultItemCard({ item, category }: VaultItemCardProps) {
             {tags.length > 0 && (
               <div className="flex gap-1.5 mt-2">
                 {tags.map((tag) => (
-                  <span key={tag} className="text-xs text-accent-purple bg-accent-purple/10 px-2 py-0.5 rounded-full">
+                  <span key={tag} className="text-xs text-xp-bar bg-xp-bar/10 px-2 py-0.5 rounded-full">
                     #{tag}
                   </span>
                 ))}
@@ -84,7 +84,7 @@ export function VaultItemCard({ item, category }: VaultItemCardProps) {
             </button>
             <button
               onClick={() => setEditing(true)}
-              className="p-1.5 rounded-lg text-text-muted hover:text-accent-purple transition-colors opacity-0 group-hover:opacity-100"
+              className="p-1.5 rounded-lg text-text-muted hover:text-xp-bar transition-colors opacity-0 group-hover:opacity-100"
             >
               <Pencil className="w-4 h-4" />
             </button>

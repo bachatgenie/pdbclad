@@ -17,14 +17,14 @@ export function LifeProgressButton({ todoId, progress, progressMax }: LifeProgre
       </span>
       <div className="w-16 h-1.5 rounded-full bg-bg-card">
         <div
-          className="h-full rounded-full bg-accent-purple transition-all"
+          className="h-full rounded-full bg-xp-bar transition-all"
           style={{ width: `${(progress / progressMax) * 100}%` }}
         />
       </div>
       <div className="flex gap-0.5">
         <button
           onClick={() => incrementLifeProgress(todoId, 1)}
-          className="w-6 h-6 rounded-md bg-bg-card hover:bg-accent-purple/20 flex items-center justify-center text-text-muted hover:text-accent-purple transition-colors"
+          className="w-6 h-6 rounded-md bg-bg-card hover:bg-xp-bar/20 flex items-center justify-center text-text-muted hover:text-xp-bar transition-colors"
           title="+1"
         >
           <Plus className="w-3 h-3" />

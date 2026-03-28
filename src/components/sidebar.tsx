@@ -34,10 +34,10 @@ export function Sidebar() {
       <aside className="hidden md:flex flex-col w-64 min-h-screen bg-bg-secondary border-r border-border p-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 px-3 py-2 mb-8">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-accent-purple to-accent-blue flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-xp-bar flex items-center justify-center">
             <Zap className="w-5 h-5 text-white" />
           </div>
-          <span className="text-lg font-bold bg-gradient-to-r from-accent-purple to-accent-blue bg-clip-text text-transparent">
+          <span className="text-lg font-bold text-xp-bar">
             PDBclad
           </span>
         </Link>
@@ -54,7 +54,7 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                   isActive
-                    ? "bg-accent-purple/15 text-accent-purple"
+                    ? "bg-xp-bar/10 text-xp-bar"
                     : "text-text-secondary hover:text-text-primary hover:bg-bg-card"
                 )}
               >
@@ -80,7 +80,7 @@ export function Sidebar() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] transition-colors",
-                isActive ? "text-accent-purple" : "text-text-muted"
+                isActive ? "text-xp-bar" : "text-text-muted"
               )}
             >
               <item.icon className="w-5 h-5" />

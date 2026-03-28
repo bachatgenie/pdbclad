@@ -17,7 +17,7 @@ export function XPBar({ xp, level, compact }: XPBarProps) {
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-xs font-bold text-accent-purple">Lv.{level}</span>
+        <span className="text-xs font-bold text-xp-bar">Lv.{level}</span>
         <div className="w-20 h-1.5 rounded-full bg-xp-bar-bg">
           <div
             className="h-full rounded-full xp-bar-fill"

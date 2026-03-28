@@ -1,54 +1,54 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-primary: #0a0a0f;
-  --color-bg-secondary: #12121a;
-  --color-bg-card: #1a1a2e;
-  --color-bg-card-hover: #22223a;
-  --color-bg-glass: rgba(255, 255, 255, 0.05);
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-bright: rgba(255, 255, 255, 0.15);
-  --color-text-primary: #f0f0f5;
-  --color-text-secondary: #8888a0;
-  --color-text-muted: #555570;
-  --color-accent-purple: #8b5cf6;
-  --color-accent-blue: #3b82f6;
-  --color-accent-cyan: #06b6d4;
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f9fa;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #f5f5f5;
+  --color-bg-glass: rgba(0, 0, 0, 0.02);
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-bright: rgba(0, 0, 0, 0.12);
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
+  --color-accent-purple: #0066cc;
+  --color-accent-blue: #0066cc;
+  --color-accent-cyan: #0099cc;
   --color-accent-green: #10b981;
   --color-accent-yellow: #f59e0b;
   --color-accent-red: #ef4444;
   --color-accent-orange: #f97316;
   --color-accent-pink: #ec4899;
-  --color-xp-bar: #8b5cf6;
-  --color-xp-bar-bg: rgba(139, 92, 246, 0.15);
+  --color-xp-bar: #0066cc;
+  --color-xp-bar-bg: rgba(0, 102, 204, 0.1);
   --color-streak-fire: #f97316;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* Base dark theme */
+/* Base light theme */
 body {
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
 
-/* Glass card effect */
+/* Card effect - subtle border and shadow */
 .glass {
-  background: var(--color-bg-glass);
-  backdrop-filter: blur(12px);
+  background: var(--color-bg-card);
   border: 1px solid var(--color-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .glass-bright {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
+  background: var(--color-bg-secondary);
   border: 1px solid var(--color-border-bright);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
-/* XP bar animation */
+/* XP bar animation - solid color, no gradient */
 .xp-bar-fill {
-  background: linear-gradient(90deg, var(--color-accent-purple), var(--color-accent-blue));
+  background: var(--color-xp-bar);
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -83,6 +83,6 @@ body {
 
 /* Focus ring for accessibility */
 *:focus-visible {
-  outline: 2px solid var(--color-accent-purple);
+  outline: 2px solid var(--color-xp-bar);
   outline-offset: 2px;
 }

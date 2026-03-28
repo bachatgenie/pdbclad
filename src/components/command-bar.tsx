@@ -59,9 +59,9 @@ export function CommandBar() {
       {/* Trigger button — desktop top bar */}
       <button
         onClick={open}
-        className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl glass text-text-secondary hover:text-text-primary hover:border-accent-purple/30 transition-all cursor-text"
+        className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl glass text-text-secondary hover:text-text-primary hover:border-xp-bar/30 transition-all cursor-text"
       >
-        <Zap className="w-4 h-4 text-accent-purple" />
+        <Zap className="w-4 h-4 text-xp-bar" />
         <span className="text-sm">Quick log...</span>
         <kbd className="ml-8 text-xs text-text-muted bg-bg-primary px-1.5 py-0.5 rounded">
           Ctrl+K
@@ -73,7 +73,7 @@ export function CommandBar() {
         onClick={open}
         className="md:hidden fixed bottom-16 left-4 right-4 z-40 flex items-center gap-2 px-4 py-3 rounded-xl glass-bright text-text-secondary"
       >
-        <Zap className="w-4 h-4 text-accent-purple" />
+        <Zap className="w-4 h-4 text-xp-bar" />
         <span className="text-sm">Quick log...</span>
       </button>
 
@@ -95,10 +95,10 @@ export function CommandBar() {
               transition={{ duration: 0.15 }}
               className="fixed z-50 top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg px-4"
             >
-              <div className="glass-bright rounded-2xl p-6 shadow-2xl shadow-accent-purple/10">
+              <div className="glass-bright rounded-2xl p-6 shadow-2xl shadow-xp-bar/10">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-accent-purple" />
+                    <Zap className="w-5 h-5 text-xp-bar" />
                     <span className="text-sm font-medium text-text-secondary">
                       What did you do?
                     </span>
@@ -117,7 +117,7 @@ export function CommandBar() {
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder='e.g. "30 min gym session #fitness"'
-                    className="w-full px-4 py-3 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted text-lg focus:border-accent-purple focus:ring-1 focus:ring-accent-purple transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted text-lg focus:border-xp-bar focus:ring-1 focus:ring-xp-bar transition-colors"
                   />
 
                   <div className="flex items-center justify-between mt-4">
@@ -127,7 +127,7 @@ export function CommandBar() {
                           key={tag}
                           type="button"
                           onClick={() => setValue((v) => `${v} ${tag}`)}
-                          className="text-xs px-2 py-1 rounded-lg bg-bg-card text-text-muted hover:text-accent-purple transition-colors"
+                          className="text-xs px-2 py-1 rounded-lg bg-bg-card text-text-muted hover:text-xp-bar transition-colors"
                         >
                           {tag}
                         </button>
@@ -136,7 +136,7 @@ export function CommandBar() {
                     <button
                       type="submit"
                       disabled={!value.trim() || submitting}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-accent-purple to-accent-blue text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-xp-bar text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
                     >
                       {showSuccess ? (
                         "Logged! +3 XP"

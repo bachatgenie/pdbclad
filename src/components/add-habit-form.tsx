@@ -56,7 +56,7 @@ export function AddHabitForm() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Add a habit..."
-          className="flex-1 px-4 py-2.5 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted focus:border-accent-purple focus:ring-1 focus:ring-accent-purple transition-colors"
+          className="flex-1 px-4 py-2.5 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted focus:border-xp-bar focus:ring-1 focus:ring-xp-bar transition-colors"
         />
         <button
           type="button"
@@ -68,7 +68,7 @@ export function AddHabitForm() {
         <button
           type="submit"
           disabled={!title.trim()}
-          className="px-4 py-2.5 rounded-xl bg-accent-purple text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+          className="px-4 py-2.5 rounded-xl bg-xp-bar text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
         >
           <Plus className="w-5 h-5" />
         </button>
@@ -86,7 +86,7 @@ export function AddHabitForm() {
                   type="button"
                   onClick={() => setIcon(i)}
                   className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all ${
-                    icon === i ? "bg-accent-purple/20 ring-1 ring-accent-purple" : "bg-bg-card hover:bg-bg-card-hover"
+                    icon === i ? "bg-xp-bar/20 ring-1 ring-xp-bar" : "bg-bg-card hover:bg-bg-card-hover"
                   }`}
                 >
                   {i}

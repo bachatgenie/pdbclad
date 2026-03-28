@@ -40,7 +40,7 @@ export function AddTodoForm() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Add a task..."
-          className="flex-1 px-4 py-2.5 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted focus:border-accent-purple focus:ring-1 focus:ring-accent-purple transition-colors"
+          className="flex-1 px-4 py-2.5 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted focus:border-xp-bar focus:ring-1 focus:ring-xp-bar transition-colors"
         />
         <button
           type="button"
@@ -52,7 +52,7 @@ export function AddTodoForm() {
         <button
           type="submit"
           disabled={!title.trim()}
-          className="px-4 py-2.5 rounded-xl bg-accent-purple text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+          className="px-4 py-2.5 rounded-xl bg-xp-bar text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
         >
           <Plus className="w-5 h-5" />
         </button>
@@ -81,7 +81,7 @@ export function AddTodoForm() {
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="px-3 py-1 rounded-lg bg-bg-card border border-border text-text-secondary text-xs focus:border-accent-purple"
+            className="px-3 py-1 rounded-lg bg-bg-card border border-border text-text-secondary text-xs focus:border-xp-bar"
           />
 
           {/* Life list toggle */}

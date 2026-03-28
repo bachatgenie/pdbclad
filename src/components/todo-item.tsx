@@ -47,7 +47,7 @@ export function TodoItem({ todo, showActions = true }: TodoItemProps) {
             if (e.key === "Escape") setEditing(false);
           }}
           autoFocus
-          className="flex-1 px-2 py-1 rounded-lg bg-bg-primary border border-border text-sm text-text-primary focus:border-accent-purple focus:ring-1 focus:ring-accent-purple"
+          className="flex-1 px-2 py-1 rounded-lg bg-bg-primary border border-border text-sm text-text-primary focus:border-xp-bar focus:ring-1 focus:ring-xp-bar"
         />
         <button onClick={handleSaveEdit} className="text-accent-green hover:opacity-80">
           <Check className="w-4 h-4" />
@@ -81,7 +81,7 @@ export function TodoItem({ todo, showActions = true }: TodoItemProps) {
         <div className="hidden group-hover:flex items-center gap-1 pr-2">
           <button
             onClick={() => setEditing(true)}
-            className="p-1 rounded text-text-muted hover:text-accent-purple transition-colors"
+            className="p-1 rounded text-text-muted hover:text-xp-bar transition-colors"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>

@@ -153,7 +153,7 @@ export function VaultItemForm({ onClose, defaultCategory, editItem }: VaultItemF
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={`e.g. "${category === "subscription" ? "Netflix" : category === "insurance" ? "Car Insurance" : category === "vehicle" ? "Honda City" : category === "finance" ? "HDFC Credit Card" : "Item name"}"`}
-                className={`w-full px-3 py-2 rounded-xl bg-bg-primary border text-text-primary placeholder-text-muted text-sm focus:border-accent-purple focus:ring-1 focus:ring-accent-purple ${
+                className={`w-full px-3 py-2 rounded-xl bg-bg-primary border text-text-primary placeholder-text-muted text-sm focus:border-xp-bar focus:ring-1 focus:ring-xp-bar ${
                   attempted && !title.trim() ? "border-accent-red" : "border-border"
                 }`}
               />
@@ -193,7 +193,7 @@ export function VaultItemForm({ onClose, defaultCategory, editItem }: VaultItemF
                         value={fieldValues[field.key] || ""}
                         onChange={(e) => setField(field.key, e.target.value)}
                         step={field.type === "number" ? "0.01" : undefined}
-                        className={`w-full px-3 py-2 rounded-xl bg-bg-primary border text-text-primary text-sm focus:border-accent-purple focus:ring-1 focus:ring-accent-purple ${
+                        className={`w-full px-3 py-2 rounded-xl bg-bg-primary border text-text-primary text-sm focus:border-xp-bar focus:ring-1 focus:ring-xp-bar ${
                           hasError ? "border-accent-red" : "border-border"
                         }`}
                       />
@@ -215,7 +215,7 @@ export function VaultItemForm({ onClose, defaultCategory, editItem }: VaultItemF
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="ai, tools, entertainment"
-                className="w-full px-3 py-2 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted text-sm focus:border-accent-purple focus:ring-1 focus:ring-accent-purple"
+                className="w-full px-3 py-2 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted text-sm focus:border-xp-bar focus:ring-1 focus:ring-xp-bar"
               />
             </div>
 
@@ -229,7 +229,7 @@ export function VaultItemForm({ onClose, defaultCategory, editItem }: VaultItemF
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Any extra details..."
                 rows={2}
-                className="w-full px-3 py-2 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted text-sm focus:border-accent-purple focus:ring-1 focus:ring-accent-purple resize-none"
+                className="w-full px-3 py-2 rounded-xl bg-bg-primary border border-border text-text-primary placeholder-text-muted text-sm focus:border-xp-bar focus:ring-1 focus:ring-xp-bar resize-none"
               />
             </div>
 
@@ -262,7 +262,7 @@ export function VaultItemForm({ onClose, defaultCategory, editItem }: VaultItemF
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-accent-purple to-accent-blue text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-2.5 rounded-xl bg-xp-bar text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {submitting
                 ? "Saving..."
