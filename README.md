@@ -1,212 +1,153 @@
-# PDBclad - Personal Dashboard for Life
+# PDBclad — Personal Dashboard for Life
 
-A gamified personal dashboard for tracking todos, habits, projects, and more.
-
-## Setup
-
-### Prerequisites
-- Node.js 18+ and npm
-- PostgreSQL 12+ (for production)
-
-### Local Development
-
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd pdbclad
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables:**
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edit `.env` and set:
-   - `DATABASE_URL` - for SQLite: `file:./prisma/dev.db`
-   - `AUTH_SECRET` - Generate with: `openssl rand -base64 32`
-   - `NEXTAUTH_URL` - `http://localhost:3000`
-   - `NODE_ENV` - `development`
-
-4. **Initialize the database:**
-   ```bash
-   npm run db:setup
-   ```
-
-   This runs:
-   - Prisma migrations
-   - Seed script (creates demo user)
-
-5. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-   The app will be available at: `http://localhost:3001`
-
-6. **Demo credentials:**
-   - Email: `avadh@pdbclad.app`
-   - Password: `password123`
+A gamified second-brain and life operating system. Track todos, habits, projects, life admin (subscriptions, insurance, car service), and everything in between. Log fast, recall instantly, get rewarded for showing up.
 
 ---
 
-## Production Deployment
+## Quick Start (Local Dev)
 
-### Database Setup (PostgreSQL)
+### 1. Clone & install
 
-1. **Create a PostgreSQL database:**
-   ```bash
-   createdb pdbclad
-   ```
+```bash
+git clone https://github.com/bachatgenie/pdbclad.git
+cd pdbclad
+npm install
+```
 
-2. **Set environment variables:**
-   ```bash
-   DATABASE_URL="postgresql://user:password@host:5432/pdbclad"
-   AUTH_SECRET="<generate-new-secret>"
-   NEXTAUTH_URL="https://yourdomain.com"
-   NODE_ENV="production"
-   ```
+### 2. Set up environment
 
-   Generate AUTH_SECRET with: `openssl rand -base64 32`
+```bash
+cp .env.example .env
+```
 
-3. **Generate a strong AUTH_SECRET - this is critical:**
-   ```bash
-   openssl rand -base64 32
-   ```
-   Use the output as your `AUTH_SECRET` environment variable.
+Edit `.env`:
 
-4. **Run the build:**
-   ```bash
-   npm run build
-   ```
+```env
+DATABASE_URL="file:./prisma/dev.db"
+AUTH_SECRET="any-random-string-at-least-32-chars"
+NEXTAUTH_URL="http://localhost:3002"
+```
 
-5. **Set up the database:**
-   ```bash
-   npm run db:setup:prod
-   ```
+> To generate a secure `AUTH_SECRET`: `openssl rand -base64 32`
 
-   This applies all migrations and seeds the database.
+### 3. Initialize the database
 
-6. **Start the server:**
-   ```bash
-   npm run start
-   ```
+```bash
+npm run db:push    # creates schema in dev.db
+npm run seed       # creates demo user
+```
+
+### 4. Start the server
+
+```bash
+npm run dev
+```
+
+App runs at **http://localhost:3002**
+
+### 5. Log in
+
+| Field    | Value               |
+|----------|---------------------|
+| Email    | `avadh@pdbclad.app` |
+| Password | `password123`       |
 
 ---
 
 ## Scripts
 
-| Script | Purpose |
-|--------|---------|
-| `npm run dev` | Start development server on port 3001 |
-| `npm run build` | Build the Next.js app |
-| `npm start` | Start production server |
-| `npm run db:setup` | Run migrations + seed (development) |
-| `npm run db:setup:prod` | Run migrations + seed (production) |
-| `npm run db:migrate` | Run pending migrations |
-| `npm run db:push` | Push schema changes (dev only) |
-| `npm run seed` | Seed the database |
-| `npm run db:studio` | Open Prisma Studio |
-| `npm run db:validate` | Validate database schema |
+| Command               | Purpose                                      |
+|-----------------------|----------------------------------------------|
+| `npm run dev`         | Dev server on port 3002                      |
+| `npm run build`       | Build for production                         |
+| `npm start`           | Start production server                      |
+| `npm run db:push`     | Push schema to dev.db (no migration file)    |
+| `npm run seed`        | Seed demo user                               |
+| `npm run db:setup`    | Migrate + seed (development)                 |
+| `npm run db:setup:prod` | Migrate + seed (production)                |
+
+---
+
+## Production Deployment
+
+### Environment variables
+
+```env
+DATABASE_URL="postgresql://user:password@host:5432/pdbclad"
+AUTH_SECRET="<generate with: openssl rand -base64 32>"
+NEXTAUTH_URL="https://yourdomain.com"
+NODE_ENV="production"
+```
+
+### Deploy steps
+
+```bash
+npm run build
+npm run db:setup:prod   # runs prisma migrate deploy + seed
+npm start
+```
+
+Works on **Vercel**, **Railway**, **Render**, or any Node host.
+
+> **SQLite is dev-only.** Use PostgreSQL in production. Schema is compatible — just change `DATABASE_URL`.
+
+---
+
+## Tech Stack
+
+| Layer      | Tech                                          |
+|------------|-----------------------------------------------|
+| Framework  | Next.js 16 (App Router)                       |
+| UI         | React 19, Tailwind CSS 4, Lucide icons        |
+| Backend    | Next.js Server Actions                        |
+| ORM        | Prisma 6                                      |
+| Database   | SQLite (dev) / PostgreSQL (prod)              |
+| Auth       | NextAuth v5 (Credentials + JWT sessions)      |
+| Passwords  | bcryptjs                                      |
+
+---
+
+## Features
+
+- **Todos** — tasks with priority, tags, due dates, and lifetime bucket-list goals with progress tracking
+- **Habits** — boolean or quantity-based habits (good/bad), 7-day dot history, streaks, XP integration
+- **Projects** — multi-step projects with milestones, completion %, color tags, status management
+- **Life Vault** — second brain: subscriptions, insurance, vehicles, finances, documents — searchable, with reminders
+- **Activity Log** — chronological feed of everything logged (manual, auto, API)
+- **Stats** — XP chart, streaks, weekly comparisons
+- **Gamification** — XP on every action, level-up system, streaks, badges
 
 ---
 
 ## Environment Variables
 
-### Required
-
-- **DATABASE_URL** - Database connection string
-  - SQLite: `file:./prisma/dev.db`
-  - PostgreSQL: `postgresql://user:password@host:5432/pdbclad`
-
-- **AUTH_SECRET** - JWT secret for NextAuth (generate with `openssl rand -base64 32`)
-
-- **NEXTAUTH_URL** - Your app's URL
-  - Development: `http://localhost:3000`
-  - Production: `https://yourdomain.com`
-
-### Optional
-
-- **NODE_ENV** - `development` or `production` (default: `development`)
-
----
-
-## Architecture
-
-### Tech Stack
-- **Frontend**: React 19, Next.js 16, Tailwind CSS 4
-- **Backend**: Next.js App Router, Server Actions
-- **Database**: Prisma ORM, SQLite (dev) / PostgreSQL (prod)
-- **Auth**: NextAuth v5 (Credentials provider)
-- **Styling**: Tailwind CSS with CSS variables
-
-### Key Features
-- Gamification system (XP, levels, streaks, badges)
-- Todo management with lifetime goals
-- Habit tracking with quantity logging
-- Personal vault for important information
-- Activity logging and statistics
-- User authentication
-
-### Database Models
-- `User` - User profiles and stats
-- `Todo` - Tasks and lifetime goals
-- `Habit` - Habit definitions
-- `HabitLog` - Individual habit logs
-- `Project` - Projects with milestones
-- `Milestone` - Project subtasks
-- `ActivityLog` - User activity history
-- `Badge` - Achievements
-- `Streak` - Streak tracking
-- `VaultItem` - Personal vault items
-- `VaultReminder` - Vault item reminders
-- `ApiKey` - API keys for external integrations
+| Variable       | Required | Description                                           |
+|----------------|----------|-------------------------------------------------------|
+| `DATABASE_URL` | Yes      | `file:./prisma/dev.db` or PostgreSQL connection URL   |
+| `AUTH_SECRET`  | Yes      | JWT signing secret — min 32 chars                     |
+| `NEXTAUTH_URL` | Yes      | Full app URL (must match what browser uses)           |
+| `NODE_ENV`     | No       | `development` or `production`                         |
 
 ---
 
 ## Troubleshooting
 
-### Database connection errors
-- Ensure `DATABASE_URL` is correct
-- For PostgreSQL, verify the database exists and user has access
-- Check that the connection string format matches your database
+**"Cannot find module" or server error on fresh clone**
+→ Run `npm run db:push && npm run seed`
 
-### "Database file not found" on fresh clone
-- Run `npm run db:setup` to initialize the database
+**"Invalid email or password" after clone**
+→ Database file doesn't exist yet. Run `npm run db:push && npm run seed`
 
-### Auth errors
-- Ensure `AUTH_SECRET` is set and is a strong value
-- Ensure `NEXTAUTH_URL` matches your deployment URL
+**Port in use**
+→ Dev server is hardcoded to 3002. Kill old process: `npx kill-port 3002`
 
-### Port already in use
-- Development server uses port 3001 by default
-- Production uses the PORT environment variable (default 3000)
+**Windows: kill stuck Next.js process**
+```powershell
+powershell -Command "Stop-Process -Id <PID> -Force"
+```
 
----
-
-## Development
-
-### Adding a new database model
-1. Update `prisma/schema.prisma`
-2. Run `npx prisma migrate dev --name <migration-name>`
-3. Update seed.ts if needed
-4. Run `npm run seed` to test
-
-### Server actions
-All server-side actions are in `src/lib/actions.ts`. They handle:
-- Database queries and mutations
-- Authentication checks
-- XP and gamification logic
-- Cache revalidation
-
-### Testing authentication
-Use the demo credentials after seeding:
-- Email: `avadh@pdbclad.app`
-- Password: `password123`
+**Prisma generate fails while server is running**
+→ Stop the dev server first, run `npx prisma generate`, then restart
 
 ---
 
