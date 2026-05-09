@@ -1,12 +1,15 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 import { Zap } from "lucide-react";
+import Link from "next/link";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const justRegistered = searchParams.get("registered") === "1";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -49,6 +52,11 @@ export default function LoginPage() {
 
         {/* Login Card */}
         <div className="glass rounded-2xl p-8">
+          {justRegistered && (
+            <div className="bg-accent-green/10 border border-accent-green/20 rounded-xl px-4 py-3 mb-5">
+              <p className="text-accent-green text-sm font-medium">✓ Account created! Sign in below.</p>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
@@ -92,11 +100,22 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-text-muted text-xs mt-6">
-            Demo: avadh@pdbclad.app / password123
+          <p className="text-center text-text-muted text-sm mt-6">
+            Don&apos;t have an account?{" "}
+            <Link href="/signup" className="text-xp-bar hover:underline font-medium">
+              Request access
+            </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
