@@ -264,14 +264,20 @@ export function ProjectDetail({
   // ── Planning panel save ──
   async function savePlanningPanel() {
     setSubmitting(true);
-    await updateProjectPlan(project.id, {
-      planThisMonth: editValues.planThisMonth,
-      planThisWeek: editValues.planThisWeek,
-      planToday: editValues.planToday,
-      planRightNow: editValues.planRightNow,
-    });
-    setEditingField(null);
-    setSubmitting(false);
+    try {
+      await updateProjectPlan(project.id, {
+        planThisMonth: editValues.planThisMonth,
+        planThisWeek: editValues.planThisWeek,
+        planToday: editValues.planToday,
+        planRightNow: editValues.planRightNow,
+      });
+      setEditingField(null);
+    } catch (e) {
+      console.error("Planning save failed:", e);
+      alert("Save failed — check browser console for details.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (

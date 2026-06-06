@@ -380,10 +380,10 @@ export async function updateProjectPlan(projectId: string, data: {
     await prisma.project.update({
       where: { id: projectId },
       data: {
-        ...(data.planThisMonth !== undefined && { planThisMonth: data.planThisMonth.trim() || null }),
-        ...(data.planThisWeek !== undefined && { planThisWeek: data.planThisWeek.trim() || null }),
-        ...(data.planToday !== undefined && { planToday: data.planToday.trim() || null }),
-        ...(data.planRightNow !== undefined && { planRightNow: data.planRightNow.trim() || null }),
+        planThisMonth: data.planThisMonth?.trim() || null,
+        planThisWeek:  data.planThisWeek?.trim()  || null,
+        planToday:     data.planToday?.trim()      || null,
+        planRightNow:  data.planRightNow?.trim()   || null,
       },
     });
     revalidatePath(`/projects/${projectId}`);
