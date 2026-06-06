@@ -3,27 +3,63 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { ProjectForm } from "@/components/project-form";
 import { ProjectCard } from "@/components/project-card";
-import { FolderKanban } from "lucide-react";
+import { FolderKanban, Layers } from "lucide-react";
+import Link from "next/link";
 
 export default async function ProjectsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const projects = await prisma.project.findMany({
-    where: { userId: session.user.id },
-    include: { milestones: { orderBy: { order: "asc" } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [projects, areas] = await Promise.all([
+    prisma.project.findMany({
+      where: { userId: session.user.id },
+      include: {
+        milestones: { orderBy: { order: "asc" } },
+        area: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.area.findMany({
+      where: { userId: session.user.id },
+      orderBy: { order: "asc" },
+    }),
+  ]);
+
+  // Group by area
+  const byArea: Record<string, typeof projects> = {};
+  const noArea: typeof projects = [];
+
+  for (const p of projects) {
+    if (p.areaId && p.area) {
+      if (!byArea[p.areaId]) byArea[p.areaId] = [];
+      byArea[p.areaId].push(p);
+    } else {
+      noArea.push(p);
+    }
+  }
 
   const activeProjects = projects.filter((p) => p.status === "active");
-  const onHoldProjects = projects.filter((p) => p.status === "on_hold");
   const completedProjects = projects.filter((p) => p.status === "completed" || p.status === "archived");
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Projects</h1>
-        <ProjectForm />
+        <div>
+          <h1 className="text-2xl font-bold">Projects</h1>
+          <p className="text-sm text-text-muted mt-0.5">
+            {activeProjects.length} active · {completedProjects.length} completed
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/areas"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors text-sm"
+          >
+            <Layers className="w-4 h-4" />
+            Manage Areas
+          </Link>
+          <ProjectForm areas={areas} />
+        </div>
       </div>
 
       {projects.length === 0 ? (
@@ -36,37 +72,36 @@ export default async function ProjectsPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Active projects */}
-          {activeProjects.length > 0 && (
+          {/* Projects grouped by area */}
+          {areas.map((area) => {
+            const areaProjects = byArea[area.id];
+            if (!areaProjects || areaProjects.length === 0) return null;
+            return (
+              <section key={area.id} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{area.icon}</span>
+                  <h2
+                    className="text-sm font-semibold uppercase tracking-wide"
+                    style={{ color: area.color }}
+                  >
+                    {area.name}
+                  </h2>
+                  <span className="text-xs text-text-muted">({areaProjects.length})</span>
+                </div>
+                {areaProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </section>
+            );
+          })}
+
+          {/* Projects without an area */}
+          {noArea.length > 0 && (
             <section className="space-y-3">
               <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
-                Active ({activeProjects.length})
+                Unassigned ({noArea.length})
               </h2>
-              {activeProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </section>
-          )}
-
-          {/* On hold */}
-          {onHoldProjects.length > 0 && (
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-accent-yellow uppercase tracking-wide">
-                On Hold ({onHoldProjects.length})
-              </h2>
-              {onHoldProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </section>
-          )}
-
-          {/* Completed & Archived */}
-          {completedProjects.length > 0 && (
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide">
-                Completed ({completedProjects.length})
-              </h2>
-              {completedProjects.map((project) => (
+              {noArea.map((project) => (
                 <ProjectCard key={project.id} project={project} />
               ))}
             </section>
