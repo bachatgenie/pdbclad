@@ -12,14 +12,12 @@ import {
   Brain,
   BarChart3,
   Zap,
-  Layers,
 } from "lucide-react";
 import { SignOutButton } from "./sign-out-button";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/todos", label: "Todos", icon: CheckSquare },
-  { href: "/areas", label: "Areas", icon: Layers },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/habits", label: "Habits", icon: Repeat },
   { href: "/log", label: "Log", icon: ScrollText },
