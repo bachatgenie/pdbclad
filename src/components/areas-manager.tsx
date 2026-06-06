@@ -39,21 +39,19 @@ export function AreasManager({ initialAreas }: { initialAreas: Area[] }) {
     e.preventDefault();
     if (!newName.trim() || submitting) return;
     setSubmitting(true);
-    try {
-      const fd = new FormData();
-      fd.set("name", newName);
-      fd.set("icon", newIcon);
-      fd.set("color", newColor);
-      fd.set("description", newDesc);
-      await createArea(fd);
+    const fd = new FormData();
+    fd.set("name", newName);
+    fd.set("icon", newIcon);
+    fd.set("color", newColor);
+    fd.set("description", newDesc);
+    const result = await createArea(fd);
+    if (result?.error) {
+      alert("Failed to create area: " + result.error);
+    } else {
       setNewName(""); setNewIcon("📁"); setNewColor("#6b7280"); setNewDesc("");
       setShowAdd(false);
-    } catch (err) {
-      console.error("Create area failed:", err);
-      alert("Failed to create area: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setSubmitting(false);
     }
+    setSubmitting(false);
   }
 
   function startEdit(area: Area) {
@@ -67,15 +65,13 @@ export function AreasManager({ initialAreas }: { initialAreas: Area[] }) {
   async function handleSaveEdit(areaId: string) {
     if (!editName.trim()) return;
     setSubmitting(true);
-    try {
-      await updateArea(areaId, { name: editName, icon: editIcon, color: editColor, description: editDesc });
+    const result = await updateArea(areaId, { name: editName, icon: editIcon, color: editColor, description: editDesc });
+    if (result?.error) {
+      alert("Failed to update area: " + result.error);
+    } else {
       setEditingId(null);
-    } catch (err) {
-      console.error("Update area failed:", err);
-      alert("Failed to update area: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setSubmitting(false);
     }
+    setSubmitting(false);
   }
 
   async function handleDelete(areaId: string, projectCount: number) {
@@ -83,12 +79,8 @@ export function AreasManager({ initialAreas }: { initialAreas: Area[] }) {
       ? `Delete this area? ${projectCount} project(s) will become unassigned.`
       : "Delete this area?";
     if (!confirm(msg)) return;
-    try {
-      await deleteArea(areaId);
-    } catch (err) {
-      console.error("Delete area failed:", err);
-      alert("Failed to delete area: " + (err instanceof Error ? err.message : String(err)));
-    }
+    const result = await deleteArea(areaId);
+    if (result?.error) alert("Failed to delete area: " + result.error);
   }
 
   return (

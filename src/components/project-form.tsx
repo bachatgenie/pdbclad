@@ -27,15 +27,17 @@ export function ProjectForm({ areas = [] }: { areas?: Area[] }) {
     if (!title.trim() || submitting) return;
 
     setSubmitting(true);
-    try {
-      await createProject({
-        title,
-        description,
-        color,
-        areaId: areaId || undefined,
-        successDefinition,
-        firstStep,
-      });
+    const result = await createProject({
+      title,
+      description,
+      color,
+      areaId: areaId || undefined,
+      successDefinition,
+      firstStep,
+    });
+    if (result?.error) {
+      alert("Failed to create project: " + result.error);
+    } else {
       setTitle("");
       setDescription("");
       setColor("#0066cc");
@@ -44,12 +46,8 @@ export function ProjectForm({ areas = [] }: { areas?: Area[] }) {
       setFirstStep("");
       setShowAdvanced(false);
       setIsOpen(false);
-    } catch (err) {
-      console.error("Create project failed:", err);
-      alert("Failed to create project: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setSubmitting(false);
     }
+    setSubmitting(false);
   }
 
   if (!isOpen) {

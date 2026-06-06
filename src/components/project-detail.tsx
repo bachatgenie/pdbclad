@@ -110,27 +110,26 @@ export function ProjectDetail({
   // ── Field editing ──
   async function saveField(field: string) {
     setSubmitting(true);
-    try {
-      if (["title", "description", "successDefinition", "firstStep", "areaId", "color"].includes(field)) {
-        await updateProject(project.id, {
-          [field]: editValues[field as keyof typeof editValues] || undefined,
-          ...(field === "areaId" && { areaId: editValues.areaId || null }),
-        });
-      } else {
-        await updateProjectPlan(project.id, {
-          planThisMonth: editValues.planThisMonth || undefined,
-          planThisWeek: editValues.planThisWeek || undefined,
-          planToday: editValues.planToday || undefined,
-          planRightNow: editValues.planRightNow || undefined,
-        });
-      }
-      setEditingField(null);
-    } catch (err) {
-      console.error("Save field failed:", err);
-      alert("Save failed: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setSubmitting(false);
+    let result: { error?: string } | undefined;
+    if (["title", "description", "successDefinition", "firstStep", "areaId", "color"].includes(field)) {
+      result = await updateProject(project.id, {
+        [field]: editValues[field as keyof typeof editValues] || undefined,
+        ...(field === "areaId" && { areaId: editValues.areaId || null }),
+      });
+    } else {
+      result = await updateProjectPlan(project.id, {
+        planThisMonth: editValues.planThisMonth || undefined,
+        planThisWeek: editValues.planThisWeek || undefined,
+        planToday: editValues.planToday || undefined,
+        planRightNow: editValues.planRightNow || undefined,
+      });
     }
+    if (result?.error) {
+      alert("Save failed: " + result.error);
+    } else {
+      setEditingField(null);
+    }
+    setSubmitting(false);
   }
 
   // ── Milestones ──
@@ -138,16 +137,14 @@ export function ProjectDetail({
     e.preventDefault();
     if (!newMilestone.trim()) return;
     setSubmitting(true);
-    try {
-      await createMilestone(project.id, newMilestone);
+    const result = await createMilestone(project.id, newMilestone);
+    if (result?.error) {
+      alert("Failed to add milestone: " + result.error);
+    } else {
       setNewMilestone("");
       setAddingMilestone(false);
-    } catch (err) {
-      console.error("Add milestone failed:", err);
-      alert("Failed to add milestone: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setSubmitting(false);
     }
+    setSubmitting(false);
   }
 
   // ── Subtasks ──
@@ -155,16 +152,14 @@ export function ProjectDetail({
     e.preventDefault();
     if (!newSubtask.trim()) return;
     setSubmitting(true);
-    try {
-      await createSubtask(milestoneId, newSubtask);
+    const result = await createSubtask(milestoneId, newSubtask);
+    if (result?.error) {
+      alert("Failed to add subtask: " + result.error);
+    } else {
       setNewSubtask("");
       setAddingSubtask(null);
-    } catch (err) {
-      console.error("Add subtask failed:", err);
-      alert("Failed to add subtask: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setSubmitting(false);
     }
+    setSubmitting(false);
   }
 
   function toggleMilestoneExpand(id: string) {
@@ -272,36 +267,32 @@ export function ProjectDetail({
   async function handleImport() {
     if (!parsedSuggestions || importSubmitting) return;
     setImportSubmitting(true);
-    try {
-      await importAISuggestions(project.id, parsedSuggestions);
+    const result = await importAISuggestions(project.id, parsedSuggestions);
+    if (result?.error) {
+      alert("Import failed: " + result.error);
+    } else {
       setShowImport(false);
       setImportText("");
       setParsedSuggestions(null);
-    } catch (err) {
-      console.error("Import failed:", err);
-      alert("Import failed: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setImportSubmitting(false);
     }
+    setImportSubmitting(false);
   }
 
   // ── Planning panel save ──
   async function savePlanningPanel() {
     setSubmitting(true);
-    try {
-      await updateProjectPlan(project.id, {
-        planThisMonth: editValues.planThisMonth,
-        planThisWeek: editValues.planThisWeek,
-        planToday: editValues.planToday,
-        planRightNow: editValues.planRightNow,
-      });
+    const result = await updateProjectPlan(project.id, {
+      planThisMonth: editValues.planThisMonth,
+      planThisWeek: editValues.planThisWeek,
+      planToday: editValues.planToday,
+      planRightNow: editValues.planRightNow,
+    });
+    if (result?.error) {
+      alert("Save failed: " + result.error);
+    } else {
       setEditingField(null);
-    } catch (e) {
-      console.error("Planning save failed:", e);
-      alert("Save failed — check browser console for details.");
-    } finally {
-      setSubmitting(false);
     }
+    setSubmitting(false);
   }
 
   return (

@@ -265,25 +265,30 @@ export async function seedDefaultAreas(userId: string) {
   });
 }
 
-export async function createArea(formData: FormData) {
+export async function createArea(formData: FormData): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const name = (formData.get("name") as string)?.trim();
     const icon = (formData.get("icon") as string) || "📁";
     const color = (formData.get("color") as string) || "#6b7280";
     const description = (formData.get("description") as string)?.trim() || null;
-    if (!name) return;
+    if (!name) return { error: "Name is required" };
     const last = await prisma.area.findFirst({ where: { userId }, orderBy: { order: "desc" } });
     await prisma.area.create({ data: { userId, name, icon, color, description, order: (last?.order ?? -1) + 1 } });
     revalidatePath("/areas"); revalidatePath("/projects");
-  } catch (error) { console.error("Error creating area:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error creating area:", msg);
+    return { error: msg };
+  }
 }
 
-export async function updateArea(areaId: string, data: { name?: string; icon?: string; color?: string; description?: string }) {
+export async function updateArea(areaId: string, data: { name?: string; icon?: string; color?: string; description?: string }): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const area = await prisma.area.findFirst({ where: { id: areaId, userId } });
-    if (!area) return;
+    if (!area) return { error: "Area not found" };
     await prisma.area.update({
       where: { id: areaId },
       data: {
@@ -294,19 +299,28 @@ export async function updateArea(areaId: string, data: { name?: string; icon?: s
       },
     });
     revalidatePath("/areas"); revalidatePath("/projects");
-  } catch (error) { console.error("Error updating area:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error updating area:", msg);
+    return { error: msg };
+  }
 }
 
-export async function deleteArea(areaId: string) {
+export async function deleteArea(areaId: string): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const area = await prisma.area.findFirst({ where: { id: areaId, userId } });
-    if (!area) return;
-    // Unlink projects from this area before deleting
+    if (!area) return { error: "Area not found" };
     await prisma.project.updateMany({ where: { areaId, userId }, data: { areaId: null } });
     await prisma.area.delete({ where: { id: areaId } });
     revalidatePath("/areas"); revalidatePath("/projects");
-  } catch (error) { console.error("Error deleting area:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error deleting area:", msg);
+    return { error: msg };
+  }
 }
 
 // ── Projects ──
@@ -317,10 +331,10 @@ export async function createProject(data: {
   areaId?: string;
   successDefinition?: string;
   firstStep?: string;
-}) {
+}): Promise<{ error?: string; id?: string }> {
   try {
     const userId = await getUser();
-    if (!data.title?.trim()) return;
+    if (!data.title?.trim()) return { error: "Title is required" };
     const project = await prisma.project.create({
       data: {
         userId,
@@ -334,8 +348,12 @@ export async function createProject(data: {
     });
     await addXP(userId, XP_REWARDS.LOG_ACTIVITY, `Created project: ${data.title}`, "project");
     revalidatePath("/"); revalidatePath("/projects"); revalidatePath("/areas");
-    return project.id;
-  } catch (error) { console.error("Error creating project:", error); throw new Error(handleDbError(error)); }
+    return { id: project.id };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error creating project:", msg);
+    return { error: msg };
+  }
 }
 
 export async function updateProject(projectId: string, data: {
@@ -346,11 +364,11 @@ export async function updateProject(projectId: string, data: {
   areaId?: string | null;
   successDefinition?: string;
   firstStep?: string;
-}) {
+}): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
-    if (!project) return;
+    if (!project) return { error: "Project not found" };
     await prisma.project.update({
       where: { id: projectId },
       data: {
@@ -364,7 +382,12 @@ export async function updateProject(projectId: string, data: {
       },
     });
     revalidatePath("/"); revalidatePath("/projects"); revalidatePath(`/projects/${projectId}`);
-  } catch (error) { console.error("Error updating project:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error updating project:", msg);
+    return { error: msg };
+  }
 }
 
 export async function updateProjectPlan(projectId: string, data: {
@@ -372,11 +395,11 @@ export async function updateProjectPlan(projectId: string, data: {
   planThisWeek?: string;
   planToday?: string;
   planRightNow?: string;
-}) {
+}): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
-    if (!project) return;
+    if (!project) return { error: "Project not found" };
     await prisma.project.update({
       where: { id: projectId },
       data: {
@@ -387,53 +410,78 @@ export async function updateProjectPlan(projectId: string, data: {
       },
     });
     revalidatePath(`/projects/${projectId}`);
-  } catch (error) { console.error("Error updating project plan:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error updating project plan:", msg);
+    return { error: msg };
+  }
 }
 
-export async function deleteProject(projectId: string) {
+export async function deleteProject(projectId: string): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
-    if (!project) return;
+    if (!project) return { error: "Project not found" };
     await prisma.project.delete({ where: { id: projectId } });
     revalidatePath("/"); revalidatePath("/projects"); revalidatePath("/areas");
-  } catch (error) { console.error("Error deleting project:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error deleting project:", msg);
+    return { error: msg };
+  }
 }
 
-export async function createMilestone(projectId: string, title: string) {
+export async function createMilestone(projectId: string, title: string): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
-    if (!project || !title?.trim()) return;
+    if (!project || !title?.trim()) return { error: "Invalid request" };
     const lastMilestone = await prisma.milestone.findFirst({ where: { projectId }, orderBy: { order: "desc" } });
     await prisma.milestone.create({ data: { projectId, title: title.trim(), order: (lastMilestone?.order ?? -1) + 1 } });
     await recalcProjectProgress(projectId);
     revalidatePath("/"); revalidatePath("/projects"); revalidatePath(`/projects/${projectId}`);
-  } catch (error) { console.error("Error creating milestone:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error creating milestone:", msg);
+    return { error: msg };
+  }
 }
 
-export async function toggleMilestone(milestoneId: string) {
+export async function toggleMilestone(milestoneId: string): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const milestone = await prisma.milestone.findFirst({ where: { id: milestoneId }, include: { project: true } });
-    if (!milestone || milestone.project.userId !== userId) return;
+    if (!milestone || milestone.project.userId !== userId) return { error: "Milestone not found" };
     const isCompleting = !milestone.completedAt;
     await prisma.milestone.update({ where: { id: milestoneId }, data: { completedAt: isCompleting ? new Date() : null } });
     if (isCompleting) await addXP(userId, XP_REWARDS.COMPLETE_MILESTONE, `Milestone: ${milestone.title} (${milestone.project.title})`, "project");
     await recalcProjectProgress(milestone.projectId);
     revalidatePath("/"); revalidatePath("/projects"); revalidatePath(`/projects/${milestone.projectId}`);
-  } catch (error) { console.error("Error toggling milestone:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error toggling milestone:", msg);
+    return { error: msg };
+  }
 }
 
-export async function deleteMilestone(milestoneId: string) {
+export async function deleteMilestone(milestoneId: string): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const milestone = await prisma.milestone.findFirst({ where: { id: milestoneId }, include: { project: true } });
-    if (!milestone || milestone.project.userId !== userId) return;
+    if (!milestone || milestone.project.userId !== userId) return { error: "Milestone not found" };
     await prisma.milestone.delete({ where: { id: milestoneId } });
     await recalcProjectProgress(milestone.projectId);
     revalidatePath("/"); revalidatePath("/projects"); revalidatePath(`/projects/${milestone.projectId}`);
-  } catch (error) { console.error("Error deleting milestone:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error deleting milestone:", msg);
+    return { error: msg };
+  }
 }
 
 async function recalcProjectProgress(projectId: string) {
@@ -464,47 +512,62 @@ async function recalcProjectProgress(projectId: string) {
 }
 
 // ── Subtasks ──
-export async function createSubtask(milestoneId: string, title: string) {
+export async function createSubtask(milestoneId: string, title: string): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const milestone = await prisma.milestone.findFirst({ where: { id: milestoneId }, include: { project: true } });
-    if (!milestone || milestone.project.userId !== userId || !title?.trim()) return;
+    if (!milestone || milestone.project.userId !== userId || !title?.trim()) return { error: "Invalid request" };
     const last = await prisma.subtask.findFirst({ where: { milestoneId }, orderBy: { order: "desc" } });
     await prisma.subtask.create({ data: { milestoneId, title: title.trim(), order: (last?.order ?? -1) + 1 } });
     await recalcProjectProgress(milestone.projectId);
     revalidatePath(`/projects/${milestone.projectId}`);
-  } catch (error) { console.error("Error creating subtask:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error creating subtask:", msg);
+    return { error: msg };
+  }
 }
 
-export async function toggleSubtask(subtaskId: string) {
+export async function toggleSubtask(subtaskId: string): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const subtask = await prisma.subtask.findFirst({
       where: { id: subtaskId },
       include: { milestone: { include: { project: true } } },
     });
-    if (!subtask || subtask.milestone.project.userId !== userId) return;
+    if (!subtask || subtask.milestone.project.userId !== userId) return { error: "Subtask not found" };
     const isCompleting = !subtask.completedAt;
     await prisma.subtask.update({ where: { id: subtaskId }, data: { completedAt: isCompleting ? new Date() : null } });
     if (isCompleting) await addXP(userId, 5, `Subtask: ${subtask.title}`, "project");
     await recalcProjectProgress(subtask.milestone.projectId);
     revalidatePath(`/projects/${subtask.milestone.projectId}`);
-  } catch (error) { console.error("Error toggling subtask:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error toggling subtask:", msg);
+    return { error: msg };
+  }
 }
 
-export async function deleteSubtask(subtaskId: string) {
+export async function deleteSubtask(subtaskId: string): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const subtask = await prisma.subtask.findFirst({
       where: { id: subtaskId },
       include: { milestone: { include: { project: true } } },
     });
-    if (!subtask || subtask.milestone.project.userId !== userId) return;
+    if (!subtask || subtask.milestone.project.userId !== userId) return { error: "Subtask not found" };
     const projectId = subtask.milestone.projectId;
     await prisma.subtask.delete({ where: { id: subtaskId } });
     await recalcProjectProgress(projectId);
     revalidatePath(`/projects/${projectId}`);
-  } catch (error) { console.error("Error deleting subtask:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error deleting subtask:", msg);
+    return { error: msg };
+  }
 }
 
 // Import AI suggestions (milestones + subtasks from parsed AI response)
@@ -512,13 +575,12 @@ export async function importAISuggestions(projectId: string, suggestions: {
   successDefinition?: string;
   firstStep?: string;
   milestones: { title: string; subtasks: string[] }[];
-}) {
+}): Promise<{ error?: string }> {
   try {
     const userId = await getUser();
     const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
-    if (!project) return;
+    if (!project) return { error: "Project not found" };
 
-    // Update success definition if provided
     if (suggestions.successDefinition || suggestions.firstStep) {
       await prisma.project.update({
         where: { id: projectId },
@@ -529,7 +591,6 @@ export async function importAISuggestions(projectId: string, suggestions: {
       });
     }
 
-    // Create milestones with subtasks
     for (let i = 0; i < suggestions.milestones.length; i++) {
       const m = suggestions.milestones[i];
       const last = await prisma.milestone.findFirst({ where: { projectId }, orderBy: { order: "desc" } });
@@ -543,8 +604,12 @@ export async function importAISuggestions(projectId: string, suggestions: {
 
     await recalcProjectProgress(projectId);
     revalidatePath(`/projects/${projectId}`);
-    return { success: true };
-  } catch (error) { console.error("Error importing AI suggestions:", error); throw new Error(handleDbError(error)); }
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Error importing AI suggestions:", msg);
+    return { error: msg };
+  }
 }
 
 // ── Vault ──

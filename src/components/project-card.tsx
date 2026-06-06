@@ -61,49 +61,38 @@ export function ProjectCard({ project }: { project: Project }) {
   async function handleSaveEdit() {
     if (!editTitle.trim()) return;
     setSubmitting(true);
-    try {
-      await updateProject(project.id, { title: editTitle, description: editDesc });
+    const result = await updateProject(project.id, { title: editTitle, description: editDesc });
+    if (result?.error) {
+      alert("Failed to update project: " + result.error);
+    } else {
       setEditing(false);
-    } catch (err) {
-      console.error("Update project failed:", err);
-      alert("Failed to update project: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setSubmitting(false);
     }
+    setSubmitting(false);
   }
 
   async function handleStatusChange(newStatus: string) {
-    try {
-      await updateProject(project.id, { status: newStatus });
-    } catch (err) {
-      console.error("Status change failed:", err);
-    }
+    const result = await updateProject(project.id, { status: newStatus });
+    if (result?.error) console.error("Status change failed:", result.error);
   }
 
   async function handleAddMilestone(e: React.FormEvent) {
     e.preventDefault();
     if (!newMilestone.trim()) return;
     setSubmitting(true);
-    try {
-      await createMilestone(project.id, newMilestone);
+    const result = await createMilestone(project.id, newMilestone);
+    if (result?.error) {
+      alert("Failed to add milestone: " + result.error);
+    } else {
       setNewMilestone("");
       setAddingMilestone(false);
-    } catch (err) {
-      console.error("Add milestone failed:", err);
-      alert("Failed to add milestone: " + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setSubmitting(false);
     }
+    setSubmitting(false);
   }
 
   async function handleDelete() {
     if (!confirm("Delete this project and all its milestones?")) return;
-    try {
-      await deleteProject(project.id);
-    } catch (err) {
-      console.error("Delete project failed:", err);
-      alert("Failed to delete project: " + (err instanceof Error ? err.message : String(err)));
-    }
+    const result = await deleteProject(project.id);
+    if (result?.error) alert("Failed to delete project: " + result.error);
   }
 
   return (
