@@ -39,15 +39,21 @@ export function AreasManager({ initialAreas }: { initialAreas: Area[] }) {
     e.preventDefault();
     if (!newName.trim() || submitting) return;
     setSubmitting(true);
-    const fd = new FormData();
-    fd.set("name", newName);
-    fd.set("icon", newIcon);
-    fd.set("color", newColor);
-    fd.set("description", newDesc);
-    await createArea(fd);
-    setNewName(""); setNewIcon("📁"); setNewColor("#6b7280"); setNewDesc("");
-    setShowAdd(false);
-    setSubmitting(false);
+    try {
+      const fd = new FormData();
+      fd.set("name", newName);
+      fd.set("icon", newIcon);
+      fd.set("color", newColor);
+      fd.set("description", newDesc);
+      await createArea(fd);
+      setNewName(""); setNewIcon("📁"); setNewColor("#6b7280"); setNewDesc("");
+      setShowAdd(false);
+    } catch (err) {
+      console.error("Create area failed:", err);
+      alert("Failed to create area: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function startEdit(area: Area) {
@@ -61,9 +67,15 @@ export function AreasManager({ initialAreas }: { initialAreas: Area[] }) {
   async function handleSaveEdit(areaId: string) {
     if (!editName.trim()) return;
     setSubmitting(true);
-    await updateArea(areaId, { name: editName, icon: editIcon, color: editColor, description: editDesc });
-    setEditingId(null);
-    setSubmitting(false);
+    try {
+      await updateArea(areaId, { name: editName, icon: editIcon, color: editColor, description: editDesc });
+      setEditingId(null);
+    } catch (err) {
+      console.error("Update area failed:", err);
+      alert("Failed to update area: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleDelete(areaId: string, projectCount: number) {
@@ -71,7 +83,12 @@ export function AreasManager({ initialAreas }: { initialAreas: Area[] }) {
       ? `Delete this area? ${projectCount} project(s) will become unassigned.`
       : "Delete this area?";
     if (!confirm(msg)) return;
-    await deleteArea(areaId);
+    try {
+      await deleteArea(areaId);
+    } catch (err) {
+      console.error("Delete area failed:", err);
+      alert("Failed to delete area: " + (err instanceof Error ? err.message : String(err)));
+    }
   }
 
   return (

@@ -61,28 +61,49 @@ export function ProjectCard({ project }: { project: Project }) {
   async function handleSaveEdit() {
     if (!editTitle.trim()) return;
     setSubmitting(true);
-    await updateProject(project.id, { title: editTitle, description: editDesc });
-    setEditing(false);
-    setSubmitting(false);
+    try {
+      await updateProject(project.id, { title: editTitle, description: editDesc });
+      setEditing(false);
+    } catch (err) {
+      console.error("Update project failed:", err);
+      alert("Failed to update project: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleStatusChange(newStatus: string) {
-    await updateProject(project.id, { status: newStatus });
+    try {
+      await updateProject(project.id, { status: newStatus });
+    } catch (err) {
+      console.error("Status change failed:", err);
+    }
   }
 
   async function handleAddMilestone(e: React.FormEvent) {
     e.preventDefault();
     if (!newMilestone.trim()) return;
     setSubmitting(true);
-    await createMilestone(project.id, newMilestone);
-    setNewMilestone("");
-    setAddingMilestone(false);
-    setSubmitting(false);
+    try {
+      await createMilestone(project.id, newMilestone);
+      setNewMilestone("");
+      setAddingMilestone(false);
+    } catch (err) {
+      console.error("Add milestone failed:", err);
+      alert("Failed to add milestone: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleDelete() {
     if (!confirm("Delete this project and all its milestones?")) return;
-    await deleteProject(project.id);
+    try {
+      await deleteProject(project.id);
+    } catch (err) {
+      console.error("Delete project failed:", err);
+      alert("Failed to delete project: " + (err instanceof Error ? err.message : String(err)));
+    }
   }
 
   return (
