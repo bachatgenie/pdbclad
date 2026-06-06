@@ -25,6 +25,7 @@ model User {
   streaks      Streak[]
   apiKeys      ApiKey[]
   vaultItems   VaultItem[]
+  areas        Area[]
 }
 
 model Todo {
@@ -44,17 +45,39 @@ model Todo {
   user User @relation(fields: [userId], references: [id])
 }
 
-model Project {
+model Area {
   id          String   @id @default(cuid())
   userId      String
-  title       String
+  name        String
+  icon        String   @default("📁")
+  color       String   @default("#6b7280")
   description String?
-  status      String   @default("active") // active, on_hold, completed, archived
-  progressPct Int      @default(0)
-  color       String   @default("#8b5cf6") // purple default
+  order       Int      @default(0)
   createdAt   DateTime @default(now())
 
+  user     User      @relation(fields: [userId], references: [id])
+  projects Project[]
+}
+
+model Project {
+  id                String   @id @default(cuid())
+  userId            String
+  areaId            String?
+  title             String
+  description       String?
+  successDefinition String?
+  firstStep         String?
+  planThisMonth     String?
+  planThisWeek      String?
+  planToday         String?
+  planRightNow      String?
+  status            String   @default("active") // active, on_hold, completed, archived
+  progressPct       Int      @default(0)
+  color             String   @default("#0066cc")
+  createdAt         DateTime @default(now())
+
   user       User        @relation(fields: [userId], references: [id])
+  area       Area?       @relation(fields: [areaId], references: [id])
   milestones Milestone[]
 }
 
@@ -66,7 +89,19 @@ model Milestone {
   completedAt DateTime?
   createdAt   DateTime  @default(now())
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subtasks Subtask[]
+}
+
+model Subtask {
+  id          String    @id @default(cuid())
+  milestoneId String
+  title       String
+  order       Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
 }
 
 model Habit {
