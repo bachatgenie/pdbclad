@@ -23,12 +23,27 @@ model User {
 
   todos        Todo[]
   projects     Project[]
+  areas        Area[]
   habits       Habit[]
   activityLogs ActivityLog[]
   badges       Badge[]
   streaks      Streak[]
   apiKeys      ApiKey[]
   vaultItems   VaultItem[]
+}
+
+model Area {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  icon        String   @default("📁")
+  color       String   @default("#6b7280")
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id])
+  projects Project[]
 }
 
 model Todo {
@@ -51,6 +66,7 @@ model Todo {
 model Project {
   id          String   @id @default(cuid())
   userId      String
+  areaId      String?
   title       String
   description String?
   status      String   @default("active")
@@ -59,6 +75,7 @@ model Project {
   createdAt   DateTime @default(now())
 
   user       User        @relation(fields: [userId], references: [id])
+  area       Area?       @relation(fields: [areaId], references: [id])
   milestones Milestone[]
 }
 

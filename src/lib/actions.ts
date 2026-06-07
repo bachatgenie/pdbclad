@@ -436,6 +436,85 @@ export async function recordLoginStreak() {
   }
 }
 
+// ── Areas ──
+const DEFAULT_AREAS = [
+  { name: "Home",             icon: "🏠", color: "#10b981", order: 0 },
+  { name: "Career",           icon: "💼", color: "#0066cc", order: 1 },
+  { name: "Personal Finance", icon: "💰", color: "#f59e0b", order: 2 },
+  { name: "Personal Fitness", icon: "💪", color: "#f97316", order: 3 },
+  { name: "Side Hustle",      icon: "🚀", color: "#8b5cf6", order: 4 },
+  { name: "Self Learning",    icon: "📚", color: "#06b6d4", order: 5 },
+  { name: "Reading",          icon: "📖", color: "#ec4899", order: 6 },
+  { name: "Office",           icon: "🏢", color: "#6b7280", order: 7 },
+];
+
+export async function seedDefaultAreas(userId: string) {
+  const existing = await prisma.area.count({ where: { userId } });
+  if (existing > 0) return;
+  await prisma.area.createMany({ data: DEFAULT_AREAS.map((a) => ({ ...a, userId })) });
+}
+
+export async function createArea(formData: FormData): Promise<{ error?: string }> {
+  try {
+    const userId = await getUser();
+    const name = (formData.get("name") as string)?.trim();
+    const icon = (formData.get("icon") as string) || "📁";
+    const color = (formData.get("color") as string) || "#6b7280";
+    const description = (formData.get("description") as string)?.trim() || null;
+    if (!name) return { error: "Name is required" };
+    const last = await prisma.area.findFirst({ where: { userId }, orderBy: { order: "desc" } });
+    await prisma.area.create({ data: { userId, name, icon, color, description, order: (last?.order ?? -1) + 1 } });
+    revalidatePath("/areas");
+    revalidatePath("/projects");
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("createArea error:", msg);
+    return { error: msg };
+  }
+}
+
+export async function updateArea(areaId: string, data: { name?: string; icon?: string; color?: string; description?: string }): Promise<{ error?: string }> {
+  try {
+    const userId = await getUser();
+    const area = await prisma.area.findFirst({ where: { id: areaId, userId } });
+    if (!area) return { error: "Area not found" };
+    await prisma.area.update({
+      where: { id: areaId },
+      data: {
+        ...(data.name !== undefined && { name: data.name.trim() }),
+        ...(data.icon !== undefined && { icon: data.icon }),
+        ...(data.color !== undefined && { color: data.color }),
+        ...(data.description !== undefined && { description: data.description.trim() || null }),
+      },
+    });
+    revalidatePath("/areas");
+    revalidatePath("/projects");
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("updateArea error:", msg);
+    return { error: msg };
+  }
+}
+
+export async function deleteArea(areaId: string): Promise<{ error?: string }> {
+  try {
+    const userId = await getUser();
+    const area = await prisma.area.findFirst({ where: { id: areaId, userId } });
+    if (!area) return { error: "Area not found" };
+    await prisma.project.updateMany({ where: { areaId, userId }, data: { areaId: null } });
+    await prisma.area.delete({ where: { id: areaId } });
+    revalidatePath("/areas");
+    revalidatePath("/projects");
+    return {};
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("deleteArea error:", msg);
+    return { error: msg };
+  }
+}
+
 // ── Projects ──
 export async function createProject(data: {
   title: string;

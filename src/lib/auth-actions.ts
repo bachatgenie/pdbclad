@@ -2,6 +2,7 @@
 
 import { hashSync } from "bcryptjs";
 import { prisma } from "./prisma";
+import { seedDefaultAreas } from "./actions";
 
 export async function registerUser(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
@@ -31,7 +32,7 @@ export async function registerUser(formData: FormData) {
 
   // Create user
   try {
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         name,
         email,
@@ -40,7 +41,7 @@ export async function registerUser(formData: FormData) {
         level: 1,
       },
     });
-
+    await seedDefaultAreas(user.id);
     return { success: true };
   } catch (e) {
     console.error("Registration error:", e);
