@@ -8,7 +8,7 @@ const TEST_PASSWORD = "testpassword123";
 test.describe("Smoke — baseline", () => {
   test("login page loads", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /pdbclad/i })).toBeVisible();
 
     const dir = path.join("tests", "visual", "output");
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });

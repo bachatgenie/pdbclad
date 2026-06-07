@@ -13,7 +13,13 @@
     "db:setup": "npx prisma migrate dev && npm run seed",
     "db:setup:prod": "npx prisma migrate deploy && npm run seed",
     "db:studio": "npx prisma studio",
-    "db:validate": "npx prisma validate"
+    "db:validate": "npx prisma validate",
+    "dev:migrate": "npx prisma migrate dev --schema=prisma/schema.dev.prisma",
+    "dev:push": "npx prisma db push --schema=prisma/schema.dev.prisma",
+    "dev:generate": "npx prisma generate --schema=prisma/schema.dev.prisma",
+    "dev:studio": "npx prisma studio --schema=prisma/schema.dev.prisma",
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
