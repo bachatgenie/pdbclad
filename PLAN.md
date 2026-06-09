@@ -42,15 +42,19 @@ Simple POST /api/v1/log with API key auth — works with Telegram bots, iOS Shor
 - Stats page
 - XP system, levels, login streaks, command bar
 
-### Phase 4 — PARA / Areas + Project Detail (IN PROGRESS 🔄)
-- Areas (PARA) — group projects by life area ✅ DONE locally, needs production migration
-- Connect Areas to Projects (assign project to area, group by area on projects page)
-- Project detail page: /projects/[id]
-- Success definition field ("What does 100% look like?")
-- First step field
-- Planning panel: this month / this week / today / right now
-- Milestones + subtasks
-- AI export/import for project planning
+### Phase 4 — PARA / Areas + Project Detail (DONE ✅)
+- Areas (PARA) — group projects by life area ✅ DONE with production migration
+- Connect Areas to Projects ✅ DONE (assign, display with emoji badges)
+- Project detail side panel ✅ DONE with all fields
+- Success definition field ✅ DONE ("What does 100% look like?")
+- First step field ✅ DONE (auto-creates milestone)
+- Planning panel with tabs ✅ DONE (this month / this week / today / right now)
+- Milestones + subtasks ✅ DONE (hierarchical, toggleable)
+- Two-tier progress calculation ✅ DONE (50% milestones + 50% subtasks)
+- Gamification (10 XP for subtask completion) ✅ DONE
+- Server actions for all operations ✅ DONE
+- Proper migrations (migration-first, production-safe) ✅ DONE
+- Next: AI export/import, drag-drop polish (optional enhancements)
 
 ### Phase 5 — Gamification Polish (NOT STARTED ❌)
 - Badge unlock logic — check conditions after XP events
