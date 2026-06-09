@@ -30,6 +30,7 @@ model User {
   streaks      Streak[]
   apiKeys      ApiKey[]
   vaultItems   VaultItem[]
+  waitingFor   WaitingFor[]
 }
 
 model Area {
@@ -64,19 +65,24 @@ model Todo {
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  userId      String
-  areaId      String?
-  title       String
-  description String?
-  status      String   @default("active")
-  progressPct Int      @default(0)
-  color       String   @default("#8b5cf6")
-  createdAt   DateTime @default(now())
+  id                String   @id @default(cuid())
+  userId            String
+  areaId            String?
+  title             String
+  description       String?
+  successDefinition String?
+  firstStep         String?
+  notes             String?
+  status            String   @default("active")
+  progressPct       Int      @default(0)
+  color             String   @default("#8b5cf6")
+  createdAt         DateTime @default(now())
 
-  user       User        @relation(fields: [userId], references: [id])
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   area       Area?       @relation(fields: [areaId], references: [id])
   milestones Milestone[]
+  subtasks   Subtask[]
+  waitingFor WaitingFor[]
 }
 
 model Milestone {
@@ -84,10 +90,30 @@ model Milestone {
   projectId   String
   title       String
   order       Int       @default(0)
+  timeFrame   String?   // thisMonth, thisWeek, today, rightNow
+  isFirstStep Boolean   @default(false)
   completedAt DateTime?
   createdAt   DateTime  @default(now())
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subtasks  Subtask[]
+  waitingFor WaitingFor[] @relation("MilestoneWaitingFor")
+}
+
+model Subtask {
+  id          String    @id @default(cuid())
+  projectId   String
+  milestoneId String?
+  title       String
+  order       Int       @default(0)
+  timeFrame   String?   // thisMonth, thisWeek, today, rightNow
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  waitingFor WaitingFor[] @relation("SubtaskWaitingFor")
 }
 
 model Habit {
@@ -190,4 +216,19 @@ model VaultReminder {
   isActive    Boolean  @default(true)
 
   vaultItem VaultItem @relation(fields: [vaultItemId], references: [id], onDelete: Cascade)
+}
+
+model WaitingFor {
+  id                      String   @id @default(cuid())
+  projectId               String
+  referencedMilestoneId   String?
+  referencedSubtaskId     String?
+  taggedUserId            String?
+  note                    String?
+  createdAt               DateTime @default(now())
+
+  project             Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  referencedMilestone Milestone? @relation("MilestoneWaitingFor", fields: [referencedMilestoneId], references: [id], onDelete: SetNull)
+  referencedSubtask   Subtask?   @relation("SubtaskWaitingFor", fields: [referencedSubtaskId], references: [id], onDelete: SetNull)
+  taggedUser          User?      @relation(fields: [taggedUserId], references: [id], onDelete: SetNull)
 }

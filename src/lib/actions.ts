@@ -550,11 +550,46 @@ export async function updateProject(projectId: string, data: {
   description?: string;
   status?: string;
   color?: string;
+  successDefinition?: string;
+  firstStep?: string;
+  notes?: string;
+  areaId?: string | null;
 }) {
   try {
     const userId = await getUser();
     const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
     if (!project) return;
+
+    // If firstStep is being updated, create/update the isFirstStep milestone
+    if (data.firstStep !== undefined) {
+      const firstStepMilestone = await prisma.milestone.findFirst({
+        where: { projectId, isFirstStep: true },
+      });
+      if (data.firstStep?.trim()) {
+        if (firstStepMilestone) {
+          await prisma.milestone.update({
+            where: { id: firstStepMilestone.id },
+            data: { title: data.firstStep.trim() },
+          });
+        } else {
+          // Create new first step milestone
+          await prisma.milestone.create({
+            data: {
+              projectId,
+              title: data.firstStep.trim(),
+              isFirstStep: true,
+              order: 0,
+            },
+          });
+        }
+      } else if (firstStepMilestone) {
+        // Remove first step marker if clearing the field
+        await prisma.milestone.update({
+          where: { id: firstStepMilestone.id },
+          data: { isFirstStep: false },
+        });
+      }
+    }
 
     await prisma.project.update({
       where: { id: projectId },
@@ -563,6 +598,9 @@ export async function updateProject(projectId: string, data: {
         ...(data.description !== undefined && { description: data.description.trim() || null }),
         ...(data.status !== undefined && { status: data.status }),
         ...(data.color !== undefined && { color: data.color }),
+        ...(data.successDefinition !== undefined && { successDefinition: data.successDefinition.trim() || null }),
+        ...(data.notes !== undefined && { notes: data.notes.trim() || null }),
+        ...(data.areaId !== undefined && { areaId: data.areaId }),
       },
     });
 
@@ -677,16 +715,26 @@ export async function deleteMilestone(milestoneId: string) {
 
 async function recalcProjectProgress(projectId: string) {
   const milestones = await prisma.milestone.findMany({ where: { projectId } });
-  const total = milestones.length;
-  const completed = milestones.filter((m) => m.completedAt).length;
-  const pct = total === 0 ? 0 : Math.round((completed / total) * 100);
+  const subtasks = await prisma.subtask.findMany({ where: { projectId } });
+
+  // Two-tier weighting: milestones 50%, subtasks 50%
+  let pct = 0;
+  if (milestones.length > 0 || subtasks.length > 0) {
+    const milestoneCompleted = milestones.filter((m) => m.completedAt).length;
+    const milestonePct = milestones.length === 0 ? 0 : (milestoneCompleted / milestones.length) * 100;
+
+    const subtaskCompleted = subtasks.filter((s) => s.completed).length;
+    const subtaskPct = subtasks.length === 0 ? 0 : (subtaskCompleted / subtasks.length) * 100;
+
+    pct = Math.round(milestonePct * 0.5 + subtaskPct * 0.5);
+  }
 
   await prisma.project.update({
     where: { id: projectId },
     data: {
       progressPct: pct,
-      // Auto-complete project when all milestones done
-      status: pct === 100 && total > 0 ? "completed" : undefined,
+      // Auto-complete project when all items done
+      status: pct === 100 && (milestones.length > 0 || subtasks.length > 0) ? "completed" : undefined,
     },
   });
 }
@@ -798,4 +846,259 @@ export async function deleteVaultReminder(reminderId: string) {
   if (!reminder || reminder.vaultItem.userId !== userId) return;
   await prisma.vaultReminder.delete({ where: { id: reminderId } });
   revalidatePath("/vault");
+}
+
+// ── Phase 4: Subtasks ──
+export async function createSubtask(projectId: string, data: {
+  title: string;
+  milestoneId?: string;
+  timeFrame?: string;
+}) {
+  try {
+    const userId = await getUser();
+    const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
+    if (!project || !data.title?.trim()) return;
+
+    // Get the next order value
+    const lastSubtask = await prisma.subtask.findFirst({
+      where: { projectId },
+      orderBy: { order: "desc" },
+    });
+
+    const subtask = await prisma.subtask.create({
+      data: {
+        projectId,
+        milestoneId: data.milestoneId || null,
+        title: data.title.trim(),
+        order: (lastSubtask?.order ?? -1) + 1,
+        timeFrame: data.timeFrame || null,
+      },
+    });
+
+    await recalcProjectProgress(projectId);
+    revalidatePath("/projects");
+    return subtask.id;
+  } catch (error) {
+    console.error("Error creating subtask:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function updateSubtask(subtaskId: string, data: {
+  title?: string;
+  completed?: boolean;
+  timeFrame?: string;
+  milestoneId?: string | null;
+}) {
+  try {
+    const userId = await getUser();
+    const subtask = await prisma.subtask.findFirst({
+      where: { id: subtaskId },
+      include: { project: true },
+    });
+    if (!subtask || subtask.project.userId !== userId) return;
+
+    await prisma.subtask.update({
+      where: { id: subtaskId },
+      data: {
+        ...(data.title !== undefined && { title: data.title.trim() }),
+        ...(data.completed !== undefined && {
+          completed: data.completed,
+          completedAt: data.completed ? new Date() : null,
+        }),
+        ...(data.timeFrame !== undefined && { timeFrame: data.timeFrame || null }),
+        ...(data.milestoneId !== undefined && { milestoneId: data.milestoneId }),
+      },
+    });
+
+    await recalcProjectProgress(subtask.projectId);
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error updating subtask:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function toggleSubtask(subtaskId: string) {
+  try {
+    const userId = await getUser();
+    const subtask = await prisma.subtask.findFirst({
+      where: { id: subtaskId },
+      include: { project: true },
+    });
+    if (!subtask || subtask.project.userId !== userId) return;
+
+    const isCompleting = !subtask.completed;
+    await prisma.subtask.update({
+      where: { id: subtaskId },
+      data: {
+        completed: isCompleting,
+        completedAt: isCompleting ? new Date() : null,
+      },
+    });
+
+    // Award XP for completing a subtask
+    if (isCompleting) {
+      await addXP(userId, 10, `Subtask: ${subtask.title}`, "project");
+    }
+
+    await recalcProjectProgress(subtask.projectId);
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error toggling subtask:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function deleteSubtask(subtaskId: string) {
+  try {
+    const userId = await getUser();
+    const subtask = await prisma.subtask.findFirst({
+      where: { id: subtaskId },
+      include: { project: true },
+    });
+    if (!subtask || subtask.project.userId !== userId) return;
+
+    await prisma.subtask.delete({ where: { id: subtaskId } });
+    await recalcProjectProgress(subtask.projectId);
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error deleting subtask:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function reorderSubtasks(subtaskIds: string[], newOrder: number[]) {
+  try {
+    const userId = await getUser();
+
+    // Verify all subtasks belong to user
+    const subtasks = await prisma.subtask.findMany({
+      where: { id: { in: subtaskIds } },
+      include: { project: true },
+    });
+
+    if (subtasks.some(s => s.project.userId !== userId)) return;
+
+    const projectId = subtasks[0]?.projectId;
+    if (!projectId) return;
+
+    // Update order for each subtask
+    for (let i = 0; i < subtaskIds.length; i++) {
+      await prisma.subtask.update({
+        where: { id: subtaskIds[i] },
+        data: { order: newOrder[i] },
+      });
+    }
+
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error reordering subtasks:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+// ── Phase 4: Milestones Extensions ──
+export async function updateMilestone(milestoneId: string, data: {
+  title?: string;
+  timeFrame?: string;
+}) {
+  try {
+    const userId = await getUser();
+    const milestone = await prisma.milestone.findFirst({
+      where: { id: milestoneId },
+      include: { project: true },
+    });
+    if (!milestone || milestone.project.userId !== userId) return;
+
+    await prisma.milestone.update({
+      where: { id: milestoneId },
+      data: {
+        ...(data.title !== undefined && { title: data.title.trim() }),
+        ...(data.timeFrame !== undefined && { timeFrame: data.timeFrame || null }),
+      },
+    });
+
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error updating milestone:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function reorderMilestones(milestoneIds: string[], newOrder: number[]) {
+  try {
+    const userId = await getUser();
+
+    // Verify all milestones belong to user
+    const milestones = await prisma.milestone.findMany({
+      where: { id: { in: milestoneIds } },
+      include: { project: true },
+    });
+
+    if (milestones.some(m => m.project.userId !== userId)) return;
+
+    const projectId = milestones[0]?.projectId;
+    if (!projectId) return;
+
+    // Update order for each milestone
+    for (let i = 0; i < milestoneIds.length; i++) {
+      await prisma.milestone.update({
+        where: { id: milestoneIds[i] },
+        data: { order: newOrder[i] },
+      });
+    }
+
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error reordering milestones:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+// ── Phase 4: Waiting For ──
+export async function addWaitingFor(projectId: string, data: {
+  referencedMilestoneId?: string;
+  referencedSubtaskId?: string;
+  note?: string;
+}) {
+  try {
+    const userId = await getUser();
+    const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
+    if (!project) return;
+
+    if (!data.referencedMilestoneId && !data.referencedSubtaskId) return;
+
+    const waitingFor = await prisma.waitingFor.create({
+      data: {
+        projectId,
+        referencedMilestoneId: data.referencedMilestoneId || null,
+        referencedSubtaskId: data.referencedSubtaskId || null,
+        note: data.note?.trim() || null,
+      },
+    });
+
+    revalidatePath("/projects");
+    return waitingFor.id;
+  } catch (error) {
+    console.error("Error adding waiting for:", error);
+    throw new Error(handleDbError(error));
+  }
+}
+
+export async function deleteWaitingFor(waitingForId: string) {
+  try {
+    const userId = await getUser();
+    const waitingFor = await prisma.waitingFor.findFirst({
+      where: { id: waitingForId },
+      include: { project: true },
+    });
+    if (!waitingFor || waitingFor.project.userId !== userId) return;
+
+    await prisma.waitingFor.delete({ where: { id: waitingForId } });
+    revalidatePath("/projects");
+  } catch (error) {
+    console.error("Error deleting waiting for:", error);
+    throw new Error(handleDbError(error));
+  }
 }

@@ -9,6 +9,7 @@ import {
   Pencil,
   Check,
   X,
+  FileText,
 } from "lucide-react";
 import {
   deleteProject,
@@ -42,7 +43,12 @@ const STATUS_OPTIONS = [
   { value: "archived", label: "Archived", color: "text-text-muted" },
 ];
 
-export function ProjectCard({ project }: { project: Project }) {
+interface ProjectCardProps {
+  project: Project;
+  onOpenDetail?: () => void;
+}
+
+export function ProjectCard({ project, onOpenDetail }: ProjectCardProps) {
   const [expanded, setExpanded] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(project.title);
@@ -155,12 +161,22 @@ export function ProjectCard({ project }: { project: Project }) {
           </select>
 
           {!editing && (
-            <button
-              onClick={() => setEditing(true)}
-              className="p-1.5 rounded-lg hover:bg-bg-card-hover text-text-muted hover:text-text-primary transition-colors"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
+            <>
+              <button
+                onClick={onOpenDetail}
+                className="p-1.5 rounded-lg hover:bg-bg-card-hover text-text-muted hover:text-text-primary transition-colors"
+                title="Open details"
+              >
+                <FileText className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={() => setEditing(true)}
+                className="p-1.5 rounded-lg hover:bg-bg-card-hover text-text-muted hover:text-text-primary transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            </>
           )}
 
           <button

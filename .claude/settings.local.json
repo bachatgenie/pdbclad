@@ -47,7 +47,18 @@
       "Bash(npx kill-port *)",
       "Bash(taskkill /F /IM node.exe)",
       "Bash(npm run *)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3002/areas)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3002/areas)",
+      "Bash(git merge *)",
+      "Bash(git stash *)",
+      "Bash(git add *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\programmingExp\\\\PDBclad\" -Recurse -Directory -Include \"api\", \"app\")",
+      "Bash(Select-Object -First 20)",
+      "Bash(mkdir \"C:\\\\programmingExp\\\\PDBclad\\\\prisma\\\\migrations\\\\0_baseline_schema_prod\")",
+      "Bash(npx prisma *)",
+      "Bash(mkdir \"C:\\\\programmingExp\\\\PDBclad\\\\prisma\\\\migrations\\\\1_add_phase4_features\")",
+      "Read(//tmp/**)",
+      "Bash(sqlite3 prisma/dev.db \"SELECT * FROM _prisma_migrations;\")",
+      "Bash(mkdir \"C:\\\\programmingExp\\\\PDBclad\\\\prisma\\\\migrations\\\\0_initial_schema_prod\")"
     ]
   }
 }
