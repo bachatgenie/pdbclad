@@ -9,15 +9,22 @@ export default async function ProjectsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const projects = await prisma.project.findMany({
-    where: { userId: session.user.id },
-    include: {
-      milestones: { orderBy: { order: "asc" } },
-      subtasks: { orderBy: { order: "asc" } },
-      waitingFor: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const [projects, areas] = await Promise.all([
+    prisma.project.findMany({
+      where: { userId: session.user.id },
+      include: {
+        area: true,
+        milestones: { orderBy: { order: "asc" } },
+        subtasks: { orderBy: { order: "asc" } },
+        waitingFor: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.area.findMany({
+      where: { userId: session.user.id },
+      orderBy: { order: "asc" },
+    }),
+  ]);
 
   return (
     <>
@@ -36,7 +43,7 @@ export default async function ProjectsPage() {
             </p>
           </div>
         ) : (
-          <ProjectsPageClient projects={projects} />
+          <ProjectsPageClient projects={projects} areas={areas} />
         )}
       </div>
     </>

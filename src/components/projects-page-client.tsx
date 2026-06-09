@@ -48,11 +48,23 @@ interface Project {
   }>;
 }
 
-interface ProjectsPageClientProps {
-  projects: Project[];
+interface Area {
+  id: string;
+  userId: string;
+  name: string;
+  icon: string;
+  color: string;
+  description: string | null;
+  order: number;
+  createdAt: Date;
 }
 
-export function ProjectsPageClient({ projects }: ProjectsPageClientProps) {
+interface ProjectsPageClientProps {
+  projects: Project[];
+  areas: Area[];
+}
+
+export function ProjectsPageClient({ projects, areas }: ProjectsPageClientProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
@@ -119,7 +131,11 @@ export function ProjectsPageClient({ projects }: ProjectsPageClientProps) {
             onClick={() => setSelectedProjectId(null)}
           />
           {/* Panel */}
-          <ProjectDetailPanel project={selectedProject} onClose={() => setSelectedProjectId(null)} />
+          <ProjectDetailPanel
+            project={selectedProject}
+            areas={areas}
+            onClose={() => setSelectedProjectId(null)}
+          />
         </>
       )}
     </div>

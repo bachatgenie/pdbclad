@@ -26,6 +26,13 @@ type Milestone = {
   order: number;
 };
 
+type Area = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+};
+
 type Project = {
   id: string;
   title: string;
@@ -33,6 +40,7 @@ type Project = {
   status: string;
   progressPct: number;
   color: string;
+  area?: Area | null;
   milestones: Milestone[];
 };
 
@@ -140,7 +148,17 @@ export function ProjectCard({ project, onOpenDetail }: ProjectCardProps) {
             </div>
           ) : (
             <>
-              <h2 className="text-lg font-semibold">{project.title}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold">{project.title}</h2>
+                {project.area && (
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: project.area.color }}
+                  >
+                    {project.area.icon} {project.area.name}
+                  </span>
+                )}
+              </div>
               {project.description && (
                 <p className="text-sm text-text-secondary mt-0.5">{project.description}</p>
               )}

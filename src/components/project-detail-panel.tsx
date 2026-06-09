@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, ChevronDown, Plus, Trash2, Check } from "lucide-react";
+import { PlanningPanel } from "./planning-panel";
 import {
   updateProject,
   updateMilestone,
@@ -59,12 +60,21 @@ interface Project {
   createdAt: Date;
 }
 
+interface Area {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
 interface ProjectDetailPanelProps {
   project: Project & {
     milestones: Milestone[];
     subtasks: Subtask[];
     waitingFor: WaitingFor[];
+    area?: Area | null;
   };
+  areas: Area[];
   onClose: () => void;
 }
 
@@ -75,7 +85,7 @@ const TIME_FRAMES = [
   { value: "rightNow", label: "Right Now" },
 ];
 
-export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps) {
+export function ProjectDetailPanel({ project, areas, onClose }: ProjectDetailPanelProps) {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValues, setEditValues] = useState({
     title: project.title,
@@ -132,6 +142,26 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
 
       {/* Content - Scrollable */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Area Section */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-text-secondary">Area</label>
+          <select
+            value={project.areaId || ""}
+            onChange={(e) => {
+              const areaId = e.target.value || null;
+              updateProject(project.id, { areaId });
+            }}
+            className="w-full bg-bg-primary border border-text-muted/20 rounded p-2 text-sm"
+          >
+            <option value="">No Area</option>
+            {areas.map((area) => (
+              <option key={area.id} value={area.id}>
+                {area.icon} {area.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Progress Section */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
@@ -279,9 +309,12 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
           )}
         </div>
 
-        {/* Milestones & Subtasks */}
+        {/* Planning Panel */}
+        <PlanningPanel projectId={project.id} milestones={project.milestones} subtasks={project.subtasks} />
+
+        {/* All Milestones & Subtasks */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-text-secondary">Milestones & Subtasks</h3>
+          <h3 className="text-sm font-semibold text-text-secondary">All Items</h3>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {project.milestones.length === 0 && project.subtasks.length === 0 ? (
               <p className="text-xs text-text-muted">No milestones or subtasks yet</p>
