@@ -34,8 +34,8 @@ PDBclad is a **gamified personal life dashboard** — a second brain and life OS
 
 ### Local `.env` (not in git)
 ```env
-DATABASE_URL="postgresql://neondb_owner:...@ep-divine-dew-aq8soybq.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require"
-AUTH_SECRET="pdbclad-dev-secret-change-in-production-abc123xyz"
+DATABASE_URL="postgresql://<user>:<password>@<endpoint>.neon.tech/neondb?sslmode=require"   # real value: Neon dashboard → Connection string
+AUTH_SECRET="<any random 32+ char string for local dev>"
 NEXTAUTH_URL="http://localhost:3002"
 ```
 
@@ -44,7 +44,7 @@ NEXTAUTH_URL="http://localhost:3002"
 DATABASE_URL   = <same Neon URL>
 AUTH_SECRET    = <different from dev — set in Vercel dashboard>
 NEXTAUTH_URL   = https://dashboard.vibedash.uk
-BETA_CODE      = <invite code — e.g. VIBEDASH2025>
+BETA_CODE      = <invite code — see Vercel dashboard, never commit the real value>
 ```
 
 > ⚠️ `AUTH_SECRET` in production must NOT be the dev default or app will throw on startup.

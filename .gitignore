@@ -12,3 +12,6 @@ prisma/prisma/
 .prisma/
 _init/
 *.log
+
+# Claude Code local settings (can contain approved commands with secrets)
+.claude/settings.local.json
