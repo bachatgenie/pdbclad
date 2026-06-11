@@ -58,7 +58,15 @@
       "Bash(mkdir \"C:\\\\programmingExp\\\\PDBclad\\\\prisma\\\\migrations\\\\1_add_phase4_features\")",
       "Read(//tmp/**)",
       "Bash(sqlite3 prisma/dev.db \"SELECT * FROM _prisma_migrations;\")",
-      "Bash(mkdir \"C:\\\\programmingExp\\\\PDBclad\\\\prisma\\\\migrations\\\\0_initial_schema_prod\")"
+      "Bash(mkdir \"C:\\\\programmingExp\\\\PDBclad\\\\prisma\\\\migrations\\\\0_initial_schema_prod\")",
+      "Bash(npm list *)",
+      "Bash(cat > *)",
+      "Bash(curl -s -m 5 http://localhost:3002/projects)",
+      "Bash(timeout 5 curl -s http://localhost:3002/)",
+      "Bash(curl -s -m 5 http://localhost:3002)",
+      "Bash(lsof -ti:3002)",
+      "Bash(curl -s http://localhost:3002)",
+      "Bash(npx next *)"
     ]
   }
 }

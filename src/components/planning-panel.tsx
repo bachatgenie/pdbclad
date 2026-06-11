@@ -118,7 +118,15 @@ export function PlanningPanel({ projectId, milestones, subtasks }: PlanningPanel
             {itemsInFrame.milestones.map((milestone) => (
               <div key={milestone.id} className="space-y-1 bg-text-muted/5 rounded p-2">
                 <div className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={!!milestone.completedAt} className="w-4 h-4" />
+                  <input
+                    type="checkbox"
+                    checked={!!milestone.completedAt}
+                    onChange={(e) => {
+                      setSubmitting(true);
+                      updateMilestone(milestone.id, {}).finally(() => setSubmitting(false));
+                    }}
+                    className="w-4 h-4"
+                  />
                   <span className={milestone.completedAt ? "line-through text-text-muted" : "text-text-primary"}>
                     {milestone.title}
                   </span>
@@ -128,7 +136,15 @@ export function PlanningPanel({ projectId, milestones, subtasks }: PlanningPanel
                   .filter((s) => s.milestoneId === milestone.id && (s.timeFrame === activeTab || !s.timeFrame))
                   .map((subtask) => (
                     <div key={subtask.id} className="flex items-center gap-2 text-sm ml-6">
-                      <input type="checkbox" checked={subtask.completed} className="w-4 h-4" />
+                      <input
+                        type="checkbox"
+                        checked={subtask.completed}
+                        onChange={() => {
+                          setSubmitting(true);
+                          updateSubtask(subtask.id, { completed: !subtask.completed }).finally(() => setSubmitting(false));
+                        }}
+                        className="w-4 h-4"
+                      />
                       <span className={subtask.completed ? "line-through text-text-muted" : "text-text-primary"}>
                         {subtask.title}
                       </span>
@@ -142,7 +158,15 @@ export function PlanningPanel({ projectId, milestones, subtasks }: PlanningPanel
               .filter((s) => !s.milestoneId)
               .map((subtask) => (
                 <div key={subtask.id} className="flex items-center gap-2 text-sm bg-text-muted/5 rounded p-2">
-                  <input type="checkbox" checked={subtask.completed} className="w-4 h-4" />
+                  <input
+                    type="checkbox"
+                    checked={subtask.completed}
+                    onChange={() => {
+                      setSubmitting(true);
+                      updateSubtask(subtask.id, { completed: !subtask.completed }).finally(() => setSubmitting(false));
+                    }}
+                    className="w-4 h-4"
+                  />
                   <span className={subtask.completed ? "line-through text-text-muted" : "text-text-primary"}>
                     {subtask.title}
                   </span>
