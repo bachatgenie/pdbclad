@@ -9,6 +9,7 @@ import {
   Pencil,
   Check,
   X,
+  FileText,
 } from "lucide-react";
 import {
   deleteProject,
@@ -25,6 +26,13 @@ type Milestone = {
   order: number;
 };
 
+type Area = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+};
+
 type Project = {
   id: string;
   title: string;
@@ -32,6 +40,7 @@ type Project = {
   status: string;
   progressPct: number;
   color: string;
+  area?: Area | null;
   milestones: Milestone[];
 };
 
@@ -42,7 +51,12 @@ const STATUS_OPTIONS = [
   { value: "archived", label: "Archived", color: "text-text-muted" },
 ];
 
-export function ProjectCard({ project }: { project: Project }) {
+interface ProjectCardProps {
+  project: Project;
+  onOpenDetail?: () => void;
+}
+
+export function ProjectCard({ project, onOpenDetail }: ProjectCardProps) {
   const [expanded, setExpanded] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(project.title);
@@ -134,7 +148,17 @@ export function ProjectCard({ project }: { project: Project }) {
             </div>
           ) : (
             <>
-              <h2 className="text-lg font-semibold">{project.title}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold">{project.title}</h2>
+                {project.area && (
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: project.area.color }}
+                  >
+                    {project.area.icon} {project.area.name}
+                  </span>
+                )}
+              </div>
               {project.description && (
                 <p className="text-sm text-text-secondary mt-0.5">{project.description}</p>
               )}
@@ -155,12 +179,22 @@ export function ProjectCard({ project }: { project: Project }) {
           </select>
 
           {!editing && (
-            <button
-              onClick={() => setEditing(true)}
-              className="p-1.5 rounded-lg hover:bg-bg-card-hover text-text-muted hover:text-text-primary transition-colors"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
+            <>
+              <button
+                onClick={onOpenDetail}
+                className="p-1.5 rounded-lg hover:bg-bg-card-hover text-text-muted hover:text-text-primary transition-colors"
+                title="Open details"
+              >
+                <FileText className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={() => setEditing(true)}
+                className="p-1.5 rounded-lg hover:bg-bg-card-hover text-text-muted hover:text-text-primary transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            </>
           )}
 
           <button
